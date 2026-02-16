@@ -103,12 +103,14 @@ Développer une Progressive Web App (PWA) permettant aux utilisateurs de visuali
 - **Push Notifications**: Service Worker notifications
 - **Background Sync**: Synchronisation en arrière-plan
 
-#### 4.2.3 Backend
-- **API**: RESTful ou GraphQL
-- **Base de données**: PostgreSQL / MongoDB
-- **Cache**: Redis
-- **Authentification**: JWT / OAuth 2.0
-- **Hébergement**: AWS / Google Cloud / Azure
+#### 4.2.3 Backend - Supabase (BaaS)
+- **Backend as a Service**: Supabase (PostgreSQL + Auth + Realtime)
+- **Base de données**: PostgreSQL hébergée (via Supabase)
+- **Authentification**: Supabase Auth (JWT, OAuth sociaux, magic link)
+- **API**: Supabase REST API et Realtime subscriptions
+- **Stockage**: Supabase Storage pour fichiers et exports
+- **Fonctions**: Supabase Edge Functions pour calculs complexes
+- **Hébergement**: Infra gérée par Supabase (scalable auto)
 
 #### 4.2.4 Sources de Données
 - **APIs financières**: Yahoo Finance, Alpha Vantage, Quandl
@@ -124,12 +126,14 @@ Développer une Progressive Web App (PWA) permettant aux utilisateurs de visuali
 - **Lighthouse Score**: > 90 (Performance, PWA, Accessibility)
 - **Installation**: < 10 secondes (Téléchargement + installation)
 
-### 4.4 Sécurité
-- Chiffrement des données sensibles
-- Communication HTTPS uniquement
-- Stockage sécurisé des tokens
-- Conformité RGPD
-- Audit trail des accès
+### 4.4 Sécurité avec Supabase
+- **Chiffrement**: TLS 1.3 (HTTPS forcé) via Supabase
+- **Authentification**: Supabase Auth (row level security)
+- **Autorisation**: RLS (Row Level Security) PostgreSQL
+- **Audit**: Logs intégrés Supabase (pgAudit)
+- **Conformité**: RGPD + SOC2 (via Supabase)
+- **Sauvegarde**: Backups automatiques Supabase
+- **API Keys**: Gestion sécurisée via Supabase Dashboard
 
 ## 5. Design et Expérience Utilisateur
 
@@ -252,41 +256,34 @@ Une fois le frontend stabilisé, les développeurs s'attaquent au backend en col
 - [ ] Documentation frontend
 - [ ] Préparation transition backend
 
-### 7.2 Phase 2 - Backend Plus Tard (4-6 semaines)
-**Semaines 9-10 : Fondations Backend**
-- [ ] Architecture backend et API design
-- [ ] Base de données et modélisation
-- [ ] Authentification et sécurité
-- [ ] Endpoints de base (CRUD portefeuille)
-- [ ] Tests unitaires backend
+### 7.2 Phase 2 - Configuration Supabase (3-4 semaines)
+**Semaines 9-10 : Setup Supabase**
+- [ ] Création projet Supabase et configuration
+- [ ] Modélisation base de données (tables, RLS)
+- [ ] Configuration Supabase Auth (providers, policies)
+- [ ] Migration données mock vers Supabase
+- [ ] Tests connexion frontend-Supabase
 
-**Semaines 11-12 : Intégration Données**
-- [ ] Intégration APIs financières
-- [ ] Moteur de recommandation ETF
-- [ ] Calculs analytiques serveur
-- [ ] Cache et optimisation
-- [ ] Tests d'intégration
+**Semaines 11-12 : Intégration Complète**
+- [ ] Edge Functions pour calculs financiers
+- [ ] Intégration APIs financières (via Edge Functions)
+- [ ] Realtime subscriptions pour données en direct
+- [ ] Storage pour exports et rapports
+- [ ] Optimisation performance Supabase
 
-**Semaines 13-14 : Finalisation Backend**
-- [ ] Migration des données mock vers réelles
-- [ ] Performance et scalabilité
-- [ ] Sécurité et monitoring
-- [ ] Tests de charge
-- [ ] Documentation API
+### 7.3 Phase 3 - Finalisation PWA (2-3 semaines)
+- [ ] Tests d'intégration Supabase complets
+- [ ] Optimisation performance PWA (Lighthouse)
+- [ ] Configuration production Supabase
+- [ ] Tests de charge et scalabilité
+- [ ] Documentation technique finale
 
-### 7.3 Phase 3 - Intégration Complète (2-3 semaines)
-- [ ] Connexion frontend-backend complète
-- [ ] Migration des données utilisateurs
-- [ ] Tests d'intégration globaux
-- [ ] Optimisation performance complète
-- [ ] Corrections de bugs critiques
-
-### 7.4 Phase 4 - Polish & Launch (2-3 semaines)
+### 7.4 Phase 4 - Déploiement et Lancement (1-2 semaines)
 - [ ] Tests utilisateurs finaux
-- [ ] Optimisation finale UI/UX
-- [ ] Préparation des stores (Apple/Google)
-- [ ] Documentation utilisateur
-- [ ] Stratégie de lancement
+- [ ] Optimisation finale PWA (Lighthouse >90)
+- [ ] Configuration domaine et SSL
+- [ ] Déploiement production (Netlify/Vercel + Supabase)
+- [ ] Documentation utilisateur et admin
 
 ## 8. Qualité et Tests
 
@@ -320,9 +317,10 @@ Une fois le frontend stabilisé, les développeurs s'attaquent au backend en col
 
 ### 10.1 Coûts Techniques
 - [ ] Licences APIs financières
-- [ ] Infrastructure cloud
+- [ ] Plan Supabase (Starter/Pro selon usage)
+- [ ] Hébergement frontend (Netlify/Vercel)
 - [ ] Outils de développement
-- [ ] Stores (Apple Developer, Google Play)
+- [ ] Nom de domaine et SSL
 
 ### 10.2 Ressources Humaines
 - 2 développeurs full-time
