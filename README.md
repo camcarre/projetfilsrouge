@@ -2,6 +2,8 @@
 
 Une Progressive Web App (PWA) pour visualiser vos finances personnelles, analyser votre portefeuille et recevoir des recommandations personnalisées d'ETF.
 
+**Documentation** : cahier des charges, répartition des tâches, backend, structure → voir le dossier **[docs/](docs/)**.
+
 ## 🚀 Fonctionnalités
 
 ### 📈 Visualisation Financière
@@ -31,7 +33,7 @@ Une Progressive Web App (PWA) pour visualiser vos finances personnelles, analyse
 ## 🛠️ Stack Technique
 
 ### Frontend PWA
-- **Framework**: React/Vue.js (à décider)
+- **Framework**: Preact + TypeScript (TSX)
 - **UI**: Material-UI/Ant Design
 - **PWA**: Workbox, Service Worker
 - **Offline**: IndexedDB, Cache API

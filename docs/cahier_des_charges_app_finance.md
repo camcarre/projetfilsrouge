@@ -88,9 +88,9 @@ Développer une Progressive Web App (PWA) permettant aux utilisateurs de visuali
 ### 4.2 Architecture Technique - PWA
 
 #### 4.2.1 Frontend Web (PWA)
-- **Framework**: React / Vue.js / Angular (à décider)
-- **Langage**: TypeScript / JavaScript ES6+
-- **État**: Redux / Vuex / NgRx
+- **Framework**: Preact avec TypeScript (TSX)
+- **Langage**: TypeScript (TSX)
+- **État**: Redux
 - **UI Framework**: Material-UI / Ant Design / Tailwind CSS
 - **PWA Features**: Workbox / Service Worker API
 - **Stockage**: IndexedDB / localStorage / Cache API
@@ -167,7 +167,7 @@ Les deux développeurs travaillent ensemble sur le frontend pour accélérer le 
 - Optimisation des performances web (lazy loading, code splitting)
 
 **Développeur 2 - Logique Métier PWA**
-- Gestion de l'état global (Redux/Vuex)
+- Gestion de l'état global (Redux)
 - Service Worker et stratégie de cache
 - Fonctionnalités offline (IndexedDB, Cache API)
 - Installation PWA et Web App Manifest

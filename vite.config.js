@@ -1,0 +1,61 @@
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { defineConfig } from 'vite';
+var __dirname = path.dirname(fileURLToPath(import.meta.url));
+import preact from '@preact/preset-vite';
+import { VitePWA } from 'vite-plugin-pwa';
+// PWA en dev (manifest). En build, SW désactivé par défaut (bug terser). Pour build PWA complet : VITE_BUILD_PWA=1 npm run build
+var usePWA = process.env.NODE_ENV !== 'production' || process.env.VITE_BUILD_PWA === '1';
+export default defineConfig({
+    plugins: __spreadArray([
+        preact()
+    ], (usePWA ? [VitePWA({
+            registerType: 'autoUpdate',
+            includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icons/*.png'],
+            manifest: {
+                name: 'Finance PWA - Visualisation Financière',
+                short_name: 'Finance PWA',
+                description: 'Visualisez vos finances, analysez votre portefeuille et recevez des recommandations ETF',
+                theme_color: '#1e3a5f',
+                background_color: '#ffffff',
+                display: 'standalone',
+                start_url: '/',
+                icons: [
+                    {
+                        src: 'favicon.svg',
+                        sizes: 'any',
+                        type: 'image/svg+xml',
+                        purpose: 'any maskable'
+                    }
+                ]
+            },
+            workbox: {
+                globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+                runtimeCaching: [
+                    {
+                        urlPattern: /^https:\/\/api\./,
+                        handler: 'NetworkFirst',
+                        options: {
+                            cacheName: 'api-cache',
+                            networkTimeoutSeconds: 10,
+                            cacheableResponse: { statuses: [0, 200] }
+                        }
+                    }
+                ]
+            }
+        })] : []), true),
+    resolve: {
+        alias: {
+            '@': path.resolve(__dirname, './src')
+        }
+    }
+});
