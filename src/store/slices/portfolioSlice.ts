@@ -6,7 +6,9 @@ export interface Asset {
   symbol: string
   category: 'action' | 'obligation' | 'etf' | 'crypto' | 'autre'
   quantity: number
-  unitPrice: number
+  unitPrice: number // Prix actuel (Live)
+  originalPrice?: number // Prix d'achat (PRU)
+  change?: number // Variation journalière (%)
   currency: string
 }
 

@@ -9,6 +9,7 @@ import YahooFinance from 'yahoo-finance2'
 import dotenv from 'dotenv'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import bcrypt from 'bcrypt'
 
 // Charger explicitement le .env à la racine
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -57,7 +58,7 @@ function randomToken() {
 }
 
 // --- Auth ---
-app.post('/auth/register', (req, res) => {
+app.post('/auth/register', async (req, res) => {
   const { email, password } = req.body || {}
   if (!email || !password) {
     return res.status(400).json({ message: 'email et password requis' })
@@ -69,7 +70,8 @@ app.post('/auth/register', (req, res) => {
       return res.status(400).json({ message: 'Cet email est déjà utilisé' })
     }
 
-    const info = db.prepare('INSERT INTO users (email, password) VALUES (?, ?)').run(email, password)
+    const hashedPassword = await bcrypt.hash(password, 10)
+    const info = db.prepare('INSERT INTO users (email, password) VALUES (?, ?)').run(email, hashedPassword)
     const userId = info.lastInsertRowid
     const token = randomToken()
     
@@ -82,14 +84,14 @@ app.post('/auth/register', (req, res) => {
   }
 })
 
-app.post('/auth/login', (req, res) => {
+app.post('/auth/login', async (req, res) => {
   const { email, password } = req.body || {}
   if (!email || !password) {
     return res.status(400).json({ message: 'email et password requis' })
   }
   
   const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email)
-  if (!user || user.password !== password) {
+  if (!user || !(await bcrypt.compare(password, user.password))) {
     return res.status(401).json({ message: 'Email ou mot de passe incorrect' })
   }
   
@@ -134,7 +136,7 @@ app.post('/auth/logout', (req, res) => {
 })
 
 // --- Actifs (protégés par token, authentification requise) ---
-app.get('/api/assets', (req, res) => {
+app.get('/api/assets', async (req, res) => {
   const userId = getUserId(req)
   if (!userId) return res.status(401).json({ message: 'Non authentifié' })
   
@@ -148,20 +150,79 @@ app.get('/api/assets', (req, res) => {
   }
   
   const assets = db.prepare(query).all(...params)
-  const totalValue = assets.reduce((s, a) => s + a.quantity * a.unit_price, 0)
   
+  // Enrichir avec les prix en temps réel de Yahoo Finance
+  const enrichedAssets = await Promise.all(assets.map(async (a) => {
+    try {
+      // On tente de récupérer le prix live
+      const quote = await yahooFinance.quote(a.symbol)
+      const livePrice = quote?.regularMarketPrice || a.unit_price
+      
+      return {
+        id: a.id,
+        name: a.name,
+        symbol: a.symbol,
+        category: a.category,
+        quantity: a.quantity,
+        unitPrice: livePrice,
+        originalPrice: a.unit_price, // Garder le PRU (Prix de Revient Unitaire)
+        currency: a.currency,
+        change: quote?.regularMarketChangePercent || 0
+      }
+    } catch (err) {
+      console.warn(`[assets] Impossible de récupérer le prix pour ${a.symbol}:`, err.message)
+      return {
+        id: a.id,
+        name: a.name,
+        symbol: a.symbol,
+        category: a.category,
+        quantity: a.quantity,
+        unitPrice: a.unit_price,
+        currency: a.currency,
+        change: 0
+      }
+    }
+  }))
+
+  const totalValue = enrichedAssets.reduce((s, a) => s + a.quantity * a.unitPrice, 0)
+  
+  // Enregistrer un snapshot quotidien (si pas déjà fait aujourd'hui)
+  try {
+    const today = new Date().toISOString().split('T')[0]
+    const existingSnapshot = db.prepare('SELECT id FROM portfolio_history WHERE user_id = ? AND date >= ?').get(userId, today)
+    
+    if (!existingSnapshot && totalValue > 0) {
+      db.prepare('INSERT INTO portfolio_history (user_id, total_value) VALUES (?, ?)').run(userId, totalValue)
+      console.log(`[history] Snapshot enregistré pour l'utilisateur ${userId} : ${totalValue}€`)
+    }
+  } catch (err) {
+    console.warn('[history] Erreur lors de l\'enregistrement du snapshot:', err.message)
+  }
+
   res.status(200).json({
-    assets: assets.map((a) => ({
-      id: a.id,
-      name: a.name,
-      symbol: a.symbol,
-      category: a.category,
-      quantity: a.quantity,
-      unitPrice: a.unit_price,
-      currency: a.currency,
-    })),
+    assets: enrichedAssets,
     totalValue,
   })
+})
+
+// Route pour récupérer l'historique du portefeuille
+app.get('/api/portfolio/history', (req, res) => {
+  const userId = getUserId(req)
+  if (!userId) return res.status(401).json({ message: 'Non authentifié' })
+  
+  try {
+    const history = db.prepare(`
+      SELECT total_value as totalValue, date 
+      FROM portfolio_history 
+      WHERE user_id = ? 
+      ORDER BY date ASC
+    `).all(userId)
+    
+    res.json({ history })
+  } catch (err) {
+    console.error('[history:get]', err)
+    res.status(500).json({ message: 'Erreur lors de la récupération de l\'historique' })
+  }
 })
 
 app.post('/api/assets', (req, res) => {
@@ -414,7 +475,16 @@ app.get('/api/etfs/:ticker', async (req, res) => {
     }
     
     const details = await getEtfDetails(ticker)
-    res.status(200).json({ details })
+    
+    // Simplifier la réponse pour le front
+    const simplifiedDetails = {
+      ...details,
+      price: details.quote?.regularMarketPrice || details.quote?.previousClose || 0,
+      name: details.quote?.longName || details.quote?.shortName || ticker,
+      ticker: ticker
+    }
+    
+    res.status(200).json({ details: simplifiedDetails })
   } catch (err) {
     console.error('[etfs:details]', err)
     res.status(500).json({ message: 'Erreur lors du chargement des détails ETF' })

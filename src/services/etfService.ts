@@ -78,3 +78,22 @@ export async function fetchEtfs(filters: FetchEtfsFilters = {}): Promise<{ etfs:
   }
   return { etfs: filterMock(MOCK_ETFS, filters), error: null }
 }
+
+/** Récupère les détails d'un ETF (prix, historique, etc.) */
+export async function getEtfDetails(ticker: string): Promise<{ price: number; name: string; symbol: string } | null> {
+  if (isCustomApiConfigured()) {
+    try {
+      const { data, error } = await api.get<{ details: { price: number; name: string; ticker: string } }>(`/api/etfs/${ticker}`)
+      if (error || !data) return null
+      return {
+        price: data.details.price || 0,
+        name: data.details.name,
+        symbol: data.details.ticker,
+      }
+    } catch (err) {
+      console.error(`[etfService] Erreur lors de la récupération de ${ticker}:`, err)
+      return null
+    }
+  }
+  return null
+}

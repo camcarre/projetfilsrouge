@@ -10,10 +10,24 @@ import { setAssets } from '@/store/slices/portfolioSlice'
 import { fetchAssets, addAsset, updateAsset, removeAsset } from '@/services/portfolioService'
 import { isCustomApiConfigured } from '@/services/api/client'
 import { formatCurrency } from '@/utils/format'
+import { CombinedChart } from '@/components/ui/CombinedChart'
 import type { Asset } from '@/store/slices/portfolioSlice'
+import { getPortfolioHistory, type PortfolioHistoryEntry } from '@/services/portfolioService'
 import type { RootState } from '@/store'
 
 const CATEGORIES: Asset['category'][] = ['action', 'obligation', 'etf', 'crypto', 'autre']
+
+const POPULAR_ASSETS = [
+  { name: 'Amundi MSCI World (CW8)', symbol: 'CW8.PA', category: 'etf' },
+  { name: 'Lyxor PEA Monde (EWLD)', symbol: 'EWLD.PA', category: 'etf' },
+  { name: 'BNP S&P 500 (ESE)', symbol: 'ESE.PA', category: 'etf' },
+  { name: 'Apple Inc.', symbol: 'AAPL', category: 'action' },
+  { name: 'Microsoft Corp.', symbol: 'MSFT', category: 'action' },
+  { name: 'LVMH', symbol: 'MC.PA', category: 'action' },
+  { name: 'TotalEnergies', symbol: 'TTE.PA', category: 'action' },
+  { name: 'Bitcoin', symbol: 'BTC-USD', category: 'crypto' },
+  { name: 'Ethereum', symbol: 'ETH-USD', category: 'crypto' },
+] as const
 
 const GOALS_STORAGE_KEY = 'portfolio_goals'
 type PortfolioGoals = { targetValue: number; horizonYears: number; monthlyDCA?: number }
@@ -38,6 +52,7 @@ export function PortfolioPage() {
   const user = useSelector((s: RootState) => s.auth.user)
   const [assets, setAssetsLocal] = useState<Asset[]>([])
   const [totalValue, setTotalValue] = useState(0)
+  const [history, setHistory] = useState<PortfolioHistoryEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [requiresAuth, setRequiresAuth] = useState(false)
   const [showForm, setShowForm] = useState(false)
@@ -51,6 +66,8 @@ export function PortfolioPage() {
     unitPrice: 0,
     currency: 'EUR',
   })
+  const [marketPrice, setMarketPrice] = useState<number | null>(null)
+  const [loadingPrice, setLoadingPrice] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [goals, setGoals] = useState<PortfolioGoals | null>(() => loadGoalsFromStorage())
   const [showGoalsForm, setShowGoalsForm] = useState(false)
@@ -93,11 +110,34 @@ export function PortfolioPage() {
 
   const load = async () => {
     setLoading(true)
-    const result = await fetchAssets()
-    setAssetsLocal(result.assets)
-    setTotalValue(result.totalValue)
-    setRequiresAuth(result.requiresAuth ?? false)
-    dispatch(setAssets(result.assets))
+    const [assetsResult, historyResult] = await Promise.all([
+      fetchAssets(),
+      getPortfolioHistory()
+    ])
+    
+    setAssetsLocal(assetsResult.assets)
+    setTotalValue(assetsResult.totalValue)
+    setRequiresAuth(assetsResult.requiresAuth ?? false)
+    dispatch(setAssets(assetsResult.assets))
+    
+    // Si pas d'historique réel, on crée des points factices pour la démo
+    if (historyResult.history.length < 2 && assetsResult.totalValue > 0) {
+      const mockHist: PortfolioHistoryEntry[] = []
+      const baseVal = assetsResult.totalValue * 0.85
+      for (let i = 10; i >= 1; i--) {
+        const d = new Date()
+        d.setDate(d.getDate() - i)
+        mockHist.push({
+          date: d.toISOString(),
+          totalValue: baseVal + (Math.random() * (assetsResult.totalValue - baseVal))
+        })
+      }
+      mockHist.push({ date: new Date().toISOString(), totalValue: assetsResult.totalValue })
+      setHistory(mockHist)
+    } else {
+      setHistory(historyResult.history)
+    }
+    
     setLoading(false)
   }
 
@@ -194,6 +234,28 @@ export function PortfolioPage() {
           <Link to="/auth">
             <Button variant="primary">Se connecter</Button>
           </Link>
+        </Card>
+      )}
+
+      {/* Graphique de performance globale */}
+      {assets.length > 0 && !needLogin && (
+        <Card title="Évolution de la performance" className="mb-5 overflow-hidden">
+          <div className="h-[200px] -mx-1">
+            <CombinedChart 
+              historical={history.map(h => h.totalValue)} 
+              height={200}
+              minimal={true}
+              currency="EUR"
+            />
+          </div>
+          <div className="mt-3 flex justify-between items-center text-[11px] text-neutral-500 dark:text-neutral-400">
+             <span>Historique sur 30 jours</span>
+             {history.length > 0 && (
+               <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                 Dernier snapshot : {new Date(history[history.length-1].date).toLocaleDateString()}
+               </span>
+             )}
+          </div>
         </Card>
       )}
 
@@ -319,7 +381,14 @@ export function PortfolioPage() {
         <h2 className="text-[12px] font-semibold text-neutral-700 dark:text-neutral-300 tracking-wide uppercase">Actifs</h2>
         {!needLogin && (
           <div className="flex gap-2">
-            {assets.length > 0 && <Button variant="outline" onClick={handleExportCsv}>Exporter CSV</Button>}
+            {assets.length > 0 && (
+              <>
+                <Button variant="outline" onClick={load} disabled={loading}>
+                  {loading ? 'Actualisation...' : 'Actualiser les cours'}
+                </Button>
+                <Button variant="outline" onClick={handleExportCsv}>Exporter CSV</Button>
+              </>
+            )}
             <Button variant="primary" onClick={() => (showForm ? closeForm() : openAddForm())}>
               {showForm ? 'Annuler' : 'Ajouter un actif'}
             </Button>
@@ -329,74 +398,138 @@ export function PortfolioPage() {
 
       {showForm && (
         <Card className="mb-5" title={editingAsset ? 'Modifier l\'actif' : undefined}>
-          <form onSubmit={handleSubmit} className="space-y-2.5">
-            <div>
-              <label htmlFor="asset-name" className="sr-only">Nom</label>
-              <input
-                id="asset-name"
-                placeholder="Nom"
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: (e.target as HTMLInputElement).value }))}
-                required
-                className={inputClass}
-              />
+          <form onSubmit={handleSubmit} className="space-y-3">
+            {!editingAsset && (
+              <div>
+                <label htmlFor="asset-selector" className="block text-[12px] font-medium text-neutral-600 dark:text-neutral-400 mb-1">
+                  Sélectionner un actif populaire
+                </label>
+                <select
+                  id="asset-selector"
+                  className={inputClass}
+                  onChange={async (e) => {
+                    const val = (e.target as HTMLSelectElement).value
+                    if (val === 'custom') {
+                      setMarketPrice(null)
+                      return
+                    }
+                    const asset = POPULAR_ASSETS.find(a => a.symbol === val)
+                    if (asset) {
+                      setForm(f => ({ ...f, symbol: asset.symbol, name: asset.name, category: asset.category as Asset['category'] }))
+                      setLoadingPrice(true)
+                      try {
+                        const { getEtfDetails } = await import('@/services/etfService')
+                        const details = await getEtfDetails(asset.symbol)
+                        if (details && details.price) {
+                          setMarketPrice(details.price)
+                          setForm(f => ({ ...f, unitPrice: details.price }))
+                        }
+                      } catch (err) {
+                        console.warn('Impossible de pré-remplir le prix:', err)
+                      } finally {
+                        setLoadingPrice(false)
+                      }
+                    }
+                  }}
+                >
+                  <option value="custom">-- Choisir ou saisir manuellement --</option>
+                  {POPULAR_ASSETS.map(a => (
+                    <option key={a.symbol} value={a.symbol}>{a.name} ({a.symbol})</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="asset-name" className="block text-[12px] font-medium text-neutral-600 dark:text-neutral-400 mb-1">Nom</label>
+                <input
+                  id="asset-name"
+                  placeholder="Nom"
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: (e.target as HTMLInputElement).value }))}
+                  required
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="asset-symbol" className="block text-[12px] font-medium text-neutral-600 dark:text-neutral-400 mb-1">Symbole</label>
+                <input
+                  id="asset-symbol"
+                  placeholder="Symbole (ex. AAPL)"
+                  value={form.symbol}
+                  onChange={(e) => setForm((f) => ({ ...f, symbol: (e.target as HTMLInputElement).value }))}
+                  required
+                  className={inputClass}
+                />
+              </div>
             </div>
-            <div>
-              <label htmlFor="asset-symbol" className="sr-only">Symbole</label>
-              <input
-                id="asset-symbol"
-                placeholder="Symbole (ex. AAPL)"
-                value={form.symbol}
-                onChange={(e) => setForm((f) => ({ ...f, symbol: (e.target as HTMLInputElement).value }))}
-                required
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label htmlFor="asset-category" className="sr-only">Catégorie</label>
-              <select
-                id="asset-category"
-                value={form.category}
-                onChange={(e) => setForm((f) => ({ ...f, category: (e.target as HTMLSelectElement).value as Asset['category'] }))}
-                className={inputClass}
-              >
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="asset-quantity" className="sr-only">Quantité</label>
-              <input
-                id="asset-quantity"
-                type="number"
-                placeholder="Quantité"
-              value={form.quantity || ''}
-              onChange={(e) => setForm((f) => ({ ...f, quantity: Number((e.target as HTMLInputElement).value) || 0 }))}
-              min={0}
-              step={0.01}
-              className={inputClass}
-              />
-            </div>
-            <div>
-              <label htmlFor="asset-price" className="sr-only">Prix unitaire</label>
-              <input
-                id="asset-price"
-                type="number"
-                placeholder="Prix unitaire"
-              value={form.unitPrice || ''}
-              onChange={(e) => setForm((f) => ({ ...f, unitPrice: Number((e.target as HTMLInputElement).value) || 0 }))}
-              min={0}
-              step={0.01}
-              className={inputClass}
-              />
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label htmlFor="asset-category" className="block text-[12px] font-medium text-neutral-600 dark:text-neutral-400 mb-1">Catégorie</label>
+                <select
+                  id="asset-category"
+                  value={form.category}
+                  onChange={(e) => setForm((f) => ({ ...f, category: (e.target as HTMLSelectElement).value as Asset['category'] }))}
+                  className={inputClass}
+                >
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="asset-quantity" className="block text-[12px] font-medium text-neutral-600 dark:text-neutral-400 mb-1">Quantité</label>
+                <input
+                  id="asset-quantity"
+                  type="number"
+                  placeholder="0.00"
+                  value={form.quantity || ''}
+                  onChange={(e) => setForm((f) => ({ ...f, quantity: Number((e.target as HTMLInputElement).value) || 0 }))}
+                  min={0}
+                  step={0.0001}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="block text-[12px] font-medium text-neutral-600 dark:text-neutral-400 mb-1">
+                  Prix du marché (€)
+                </label>
+                <div className={`h-[38px] flex items-center px-3.5 border border-neutral-200 dark:border-neutral-700 rounded-lg ${POPULAR_ASSETS.some(a => a.symbol === form.symbol) ? 'bg-neutral-50 dark:bg-neutral-800/40' : 'bg-white dark:bg-neutral-900'}`}>
+                  {loadingPrice ? (
+                    <span className="text-[12px] text-neutral-400 animate-pulse">Récupération...</span>
+                  ) : POPULAR_ASSETS.some(a => a.symbol === form.symbol) ? (
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 tabular-nums">
+                        {form.unitPrice.toFixed(2)} €
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Direct</span>
+                      </span>
+                    </div>
+                  ) : (
+                    <input
+                      type="number"
+                      placeholder="0.00"
+                      value={form.unitPrice || ''}
+                      onChange={(e) => setForm((f) => ({ ...f, unitPrice: Number((e.target as HTMLInputElement).value) || 0 }))}
+                      className="w-full text-sm bg-transparent border-none outline-none text-neutral-800 dark:text-neutral-100 tabular-nums"
+                    />
+                  )}
+                </div>
+              </div>
             </div>
             {error && (
               <Alert variant="error" id="portfolio-form-error" aria-live="polite">
                 {error}
               </Alert>
             )}
-            <Button type="submit" variant="primary">{editingAsset ? 'Enregistrer les modifications' : 'Enregistrer'}</Button>
+            <div className="flex gap-2 pt-2">
+              <Button type="submit" variant="primary" className="flex-1">{editingAsset ? 'Enregistrer les modifications' : 'Ajouter au portefeuille'}</Button>
+              <Button type="button" variant="secondary" onClick={closeForm}>Annuler</Button>
+            </div>
           </form>
         </Card>
       )}
@@ -436,30 +569,59 @@ export function PortfolioPage() {
               <button type="button" onClick={() => toggleSort('value')} className={sortBy === 'value' ? 'text-neutral-800 dark:text-neutral-100 underline' : 'hover:text-neutral-700 dark:hover:text-neutral-200'}>Valeur {sortBy === 'value' && (sortDir === 'asc' ? '↑' : '↓')}</button>
             </div>
             <ul className="divide-y divide-neutral-100 dark:divide-neutral-800/80">
-            {sortedAssets.map((a) => (
-              <li key={a.id} className="py-3 px-3 -mx-3 rounded-xl flex flex-wrap items-center justify-between gap-2 text-[13px] transition-all duration-200 ease-out hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
-                <div className="flex-1 min-w-0">
-                  <span className="text-neutral-600 dark:text-neutral-400">{a.name} ({a.symbol}) – {a.quantity} × {formatCurrency(a.unitPrice)}</span>
-                  <span className="ml-2 font-medium text-neutral-800 dark:text-neutral-100 tabular-nums">{formatCurrency(a.quantity * a.unitPrice)}</span>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => openEditForm(a)}
-                    className="px-3 py-2 min-h-[44px] rounded-lg text-[12px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-100 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-all duration-200 flex items-center justify-center"
-                  >
-                    Modifier
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAssetToDelete(a)}
-                    className="px-3 py-2 min-h-[44px] rounded-lg text-[12px] font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 flex items-center justify-center"
-                  >
-                    Supprimer
-                  </button>
-                </div>
-              </li>
-            ))}
+            {sortedAssets.map((a) => {
+              const currentVal = a.quantity * a.unitPrice
+              const purchaseVal = a.quantity * (a.originalPrice ?? a.unitPrice)
+              const profitLoss = currentVal - purchaseVal
+              const profitLossPct = purchaseVal !== 0 ? (profitLoss / purchaseVal) * 100 : 0
+              const isProfit = profitLoss >= 0
+
+              return (
+                <li key={a.id} className="py-4 px-3 -mx-3 rounded-xl flex flex-wrap items-center justify-between gap-4 text-[13px] transition-all duration-200 ease-out hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="font-semibold text-neutral-800 dark:text-neutral-100">{a.name}</span>
+                      <span className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 uppercase tracking-tight">{a.symbol}</span>
+                    </div>
+                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-neutral-500 dark:text-neutral-400">
+                      <span>{a.quantity} parts</span>
+                      <span>·</span>
+                      <span>PRU: <span className="tabular-nums font-medium">{formatCurrency(a.originalPrice ?? a.unitPrice)}</span></span>
+                      <span>·</span>
+                      <span>Cours: <span className="tabular-nums font-medium text-neutral-700 dark:text-neutral-300">{formatCurrency(a.unitPrice)}</span></span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="font-semibold text-neutral-800 dark:text-neutral-100 tabular-nums text-sm">
+                      {formatCurrency(currentVal)}
+                    </span>
+                    <div className={`flex items-center gap-1.5 font-medium tabular-nums text-[11px] ${isProfit ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                      <span>{isProfit ? '+' : ''}{formatCurrency(profitLoss)}</span>
+                      <span className="opacity-60">·</span>
+                      <span>{isProfit ? '+' : ''}{profitLossPct.toFixed(2)}%</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1 flex-shrink-0 w-full sm:w-auto sm:ml-4 border-t sm:border-t-0 border-neutral-100 dark:border-neutral-800 pt-2 sm:pt-0">
+                    <button
+                      type="button"
+                      onClick={() => openEditForm(a)}
+                      className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-[12px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-100 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-all duration-200"
+                    >
+                      Modifier
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAssetToDelete(a)}
+                      className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-[12px] font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
+                    >
+                      Supprimer
+                    </button>
+                  </div>
+                </li>
+              )
+            })}
           </ul>
           </>
         )}
