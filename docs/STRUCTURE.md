@@ -1,6 +1,6 @@
 # Structure du projet (CDC)
 
-Structure frontend PWA – React + TypeScript (TSX), Redux, Tailwind, Vite.
+Structure frontend PWA – Preact + TypeScript (TSX), Redux, Tailwind, Vite. Backend : API custom (Express) dans `../backend`.
 
 ```
 projetfilsrouge/
@@ -21,7 +21,7 @@ projetfilsrouge/
 │   ├── store/              # Redux
 │   │   ├── index.ts
 │   │   └── slices/         # authSlice, portfolioSlice, …
-│   ├── services/           # API, mock (Supabase en Phase 2)
+│   ├── services/           # API custom (client), mock de secours
 │   │   └── api/
 │   ├── hooks/              # useAppDispatch, useAppSelector, custom hooks
 │   ├── utils/              # format, calculs, helpers

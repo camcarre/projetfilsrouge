@@ -1,0 +1,22 @@
+{
+  "CW8.PA": { "zone": "Monde", "theme": "Large cap", "esg": "AA", "description": "Amundi MSCI World" },
+  "EWLD.PA": { "zone": "Monde", "theme": "Large cap", "esg": "A", "description": "Amundi MSCI World Distribution" },
+  "MEUD.PA": { "zone": "Europe", "theme": "Large cap", "esg": "AA", "description": "Lyxor Euro Stoxx 50" },
+  "SPY": { "zone": "USA", "theme": "Large cap", "esg": "B", "description": "SPDR S&P 500" },
+  "QQQ": { "zone": "USA", "theme": "Technologie", "esg": "A", "description": "Invesco QQQ" },
+  "VTI": { "zone": "USA", "theme": "Total Market", "esg": "A", "description": "Vanguard Total Stock Market" },
+  "IWDA.AS": { "zone": "Monde", "theme": "Large cap", "esg": "AA", "description": "iShares Core MSCI World" },
+  "VWCE.DE": { "zone": "Monde", "theme": "Diversifié", "esg": "A", "description": "Vanguard FTSE All-World" },
+  "EMIM.L": { "zone": "Émergents", "theme": "Emerging", "esg": "A", "description": "iShares MSCI Emerging Markets" },
+  "SWRD.L": { "zone": "Monde", "theme": "Large cap", "esg": "A", "description": "SPDR MSCI World" },
+  "DRIV": { "zone": "Monde", "theme": "Sectoriel", "esg": "B", "description": "Global X Autonomous & Electric Vehicles" },
+  "VEA": { "zone": "Developed", "theme": "International", "esg": "A", "description": "Vanguard Developed Markets" },
+  "VWO": { "zone": "Émergents", "theme": "Emerging", "esg": "A", "description": "Vanguard Emerging Markets" },
+  "IWM": { "zone": "USA", "theme": "Small cap", "esg": "A", "description": "iShares Russell 2000" },
+  "EFA": { "zone": "Developed", "theme": "International", "esg": "A", "description": "iShares MSCI EAFE" },
+  "EEM": { "zone": "Émergents", "theme": "Emerging", "esg": "A", "description": "iShares MSCI Emerging Markets" },
+  "VXUS": { "zone": "Monde", "theme": "International", "esg": "A", "description": "Vanguard Total International" },
+  "BND": { "zone": "USA", "theme": "Obligations", "esg": "A", "description": "Vanguard Total Bond Market" },
+  "EWZ.PA": { "zone": "USA", "theme": "Large cap", "esg": "A", "description": "Amundi S&P 500" },
+  "MEUH.PA": { "zone": "Europe", "theme": "Large cap", "esg": "A", "description": "Lyxor MSCI Europe" }
+}

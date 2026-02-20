@@ -28,8 +28,8 @@ Sans eux, le projet ne build pas ou ne tourne pas correctement.
 | **Racine** | README.md | Présentation du projet, commandes, stack. |
 | **docs/** | cahier_des_charges_app_finance.md | CDC du projet (référence). |
 | **docs/** | repartition_taches.md | Répartition Cam / Théo. |
-| **docs/** | BACKEND.md | Explication backend (Supabase + API custom). |
-| **docs/** | API_BACKEND_CUSTOM.md | Contrat API si tu fais ton back. |
+| **docs/** | BACKEND.md | Explication backend (API custom Express, pas Supabase). |
+| **docs/** | API_BACKEND_CUSTOM.md | Contrat API du backend utilisé (auth + actifs). |
 | **docs/** | STRUCTURE.md | Arborescence du projet. |
 | **docs/** | FICHIERS_RACINE.md | Ce fichier – rôle des fichiers à la racine. |
 

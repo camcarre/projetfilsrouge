@@ -1,24 +1,23 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
-      colors: {
-        primary: {
-          50: '#eef2f7',
-          100: '#d4dfeb',
-          200: '#a8bfd7',
-          300: '#769bc0',
-          400: '#4d7aa8',
-          500: '#1e3a5f',
-          600: '#18304d',
-          700: '#12263b',
-          800: '#0c1c29',
-          900: '#061218',
-        },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+      },
+      boxShadow: {
+        'card': '0 1px 2px rgba(0,0,0,0.04)',
+        'card-dark': '0 1px 2px rgba(0,0,0,0.12)',
+        'card-hover': '0 4px 12px rgba(0,0,0,0.06)',
+        'card-hover-dark': '0 4px 16px rgba(0,0,0,0.2)',
+      },
+      transitionDuration: {
+        'smooth': '220ms',
       },
     },
   },

@@ -1,0 +1,22 @@
+{
+  "IWDA": { "zone": "Monde", "theme": "Large cap", "esg": "AA" },
+  "VWCE": { "zone": "Monde", "theme": "Diversifié", "esg": "A" },
+  "CEU": { "zone": "Europe", "theme": "ESG", "esg": "AAA" },
+  "XZWO": { "zone": "Monde", "theme": "ESG", "esg": "AA" },
+  "EMIM": { "zone": "Émergents", "theme": "Emerging", "esg": "A" },
+  "SWRD": { "zone": "Monde", "theme": "Large cap", "esg": "A" },
+  "SAUU": { "zone": "USA", "theme": "ESG", "esg": "AA" },
+  "DRIV": { "zone": "Monde", "theme": "Sectoriel", "esg": "B" },
+  "CW8.PA": { "zone": "Monde", "theme": "Large cap", "esg": "AA" },
+  "EWLD.PA": { "zone": "Monde", "theme": "Large cap", "esg": "A" },
+  "LYXOR.PA": { "zone": "Europe", "theme": "Large cap", "esg": "A" },
+  "AMUNDI.PA": { "zone": "Europe", "theme": "Diversifié", "esg": "AA" },
+  "BNP.PA": { "zone": "Europe", "theme": "ESG", "esg": "AAA" },
+  "XETRA": { "zone": "Europe", "theme": "Large cap", "esg": "A" },
+  "ETF": { "zone": "Monde", "theme": "Diversifié", "esg": "A" },
+  "LYX": { "zone": "Europe", "theme": "Large cap", "esg": "AA" },
+  "CSE": { "zone": "Europe", "theme": "ESG", "esg": "AA" },
+  "SPY": { "zone": "USA", "theme": "Large cap", "esg": "B" },
+  "QQQ": { "zone": "USA", "theme": "Technologie", "esg": "A" },
+  "VTI": { "zone": "USA", "theme": "Total Market", "esg": "A" }
+}

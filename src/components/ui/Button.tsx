@@ -1,8 +1,17 @@
-import { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ComponentChildren } from 'preact'
+import type { ButtonHTMLAttributes } from 'preact/compat'
+
+const VARIANTS = {
+  primary: 'bg-neutral-800 text-white hover:bg-neutral-700 dark:bg-neutral-200 dark:text-neutral-900 dark:hover:bg-neutral-100 shadow-sm hover:shadow-md',
+  secondary: 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 border border-transparent hover:border-neutral-200 dark:hover:border-neutral-600',
+  outline: 'border border-neutral-200 text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800/50',
+} as const
+
+export type ButtonVariant = keyof typeof VARIANTS
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline'
-  children: ReactNode
+  variant?: ButtonVariant
+  children?: ComponentChildren
 }
 
 export function Button({
@@ -11,16 +20,10 @@ export function Button({
   children,
   ...props
 }: ButtonProps) {
-  const base = 'px-4 py-2 rounded font-medium transition disabled:opacity-50'
-  const variants = {
-    primary: 'bg-primary-500 text-white hover:bg-primary-600',
-    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
-    outline: 'border-2 border-primary-500 text-primary-500 hover:bg-primary-50',
-  }
   return (
     <button
       type="button"
-      className={`${base} ${variants[variant]} ${className}`}
+      className={`inline-flex items-center justify-center min-h-[44px] px-4 py-2 rounded-lg text-[13px] font-medium tracking-tight transition-all duration-200 ease-out hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none disabled:hover:scale-100 disabled:active:scale-100 ${VARIANTS[variant]} ${className}`}
       {...props}
     >
       {children}

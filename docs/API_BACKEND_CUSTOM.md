@@ -1,6 +1,7 @@
-# Contrat API – Backend custom (ton serveur)
+# Contrat API – Backend du projet (API custom)
 
-Quand tu définis `VITE_API_URL` (ex. `http://localhost:3000`), le front appelle **ton** backend au lieu de Supabase. Ton serveur doit exposer les endpoints ci‑dessous (REST, JSON).
+**Le backend du projet est cette API custom** (serveur Express dans `../backend`). Pas Supabase.  
+Le front appelle cette API dès que `VITE_API_URL` est défini (ex. `http://localhost:3000`). Le serveur doit exposer les endpoints ci‑dessous (REST, JSON).
 
 ---
 

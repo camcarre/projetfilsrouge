@@ -61,6 +61,10 @@ async function request<T>(
       }
     }
     if (!res.ok) {
+      if (res.status === 401) {
+        clearAuthToken()
+        if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('auth:401'))
+      }
       const errPayload = data as unknown as { message?: string } | null
       const message = (errPayload && typeof errPayload.message === 'string')
         ? errPayload.message

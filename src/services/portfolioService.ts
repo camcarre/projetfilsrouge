@@ -31,11 +31,14 @@ function mapRowToAsset(row: AssetRow): Asset {
 }
 
 /** Liste des actifs du portefeuille. */
-export async function fetchAssets(portfolioId?: string): Promise<{ assets: Asset[]; totalValue: number }> {
+export async function fetchAssets(portfolioId?: string): Promise<{ assets: Asset[]; totalValue: number; requiresAuth?: boolean }> {
   if (isCustomApiConfigured()) {
     const qs = portfolioId ? `?portfolioId=${encodeURIComponent(portfolioId)}` : ''
     const { data, error } = await api.get<{ assets: AssetRow[]; totalValue?: number }>(`/api/assets${qs}`)
-    if (error) return { assets: [], totalValue: 0 }
+    if (error) {
+      const requiresAuth = error.status === 401
+      return { assets: [], totalValue: 0, ...(requiresAuth && { requiresAuth: true }) }
+    }
     const assets = (data?.assets ?? []).map(mapRowToAsset)
     const totalValue = data?.totalValue ?? assets.reduce((s, a) => s + a.quantity * a.unitPrice, 0)
     return { assets, totalValue }
@@ -111,6 +114,24 @@ export async function updateAsset(asset: Asset): Promise<{ error: Error | null }
     return { error: error ?? null }
   }
   return { error: new Error('Aucun backend configuré') }
+}
+
+/** Historique des valorisations (snapshots). API custom uniquement. */
+export type PortfolioHistoryEntry = { date: string; totalValue: number }
+export async function getPortfolioHistory(from?: string, to?: string): Promise<{ history: PortfolioHistoryEntry[]; requiresAuth?: boolean }> {
+  if (isCustomApiConfigured()) {
+    const params = new URLSearchParams()
+    if (from) params.set('from', from)
+    if (to) params.set('to', to)
+    const qs = params.toString() ? `?${params.toString()}` : ''
+    const { data, error } = await api.get<{ history: PortfolioHistoryEntry[] }>(`/api/portfolio/history${qs}`)
+    if (error) {
+      const requiresAuth = error.status === 401
+      return { history: [], ...(requiresAuth && { requiresAuth: true }) }
+    }
+    return { history: data?.history ?? [] }
+  }
+  return { history: [] }
 }
 
 /** Suppression d'un actif. */

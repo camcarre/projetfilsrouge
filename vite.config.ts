@@ -6,10 +6,16 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 import preact from '@preact/preset-vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// PWA en dev (manifest). En build, SW désactivé par défaut (bug terser). Pour build PWA complet : VITE_BUILD_PWA=1 npm run build
-const usePWA = process.env.NODE_ENV !== 'production' || process.env.VITE_BUILD_PWA === '1'
+// PWA uniquement en build (optionnel). En dev désactivé pour réduire l’usage CPU.
+const usePWA = process.env.NODE_ENV === 'production' && process.env.VITE_BUILD_PWA === '1'
 
 export default defineConfig({
+  server: {
+    watch: {
+      ignored: ['**/node_modules/**', '**/dist/**', '**/.git/**'],
+      usePolling: false,
+    },
+  },
   plugins: [
     preact(),
     ...(usePWA ? [VitePWA({

@@ -1,0 +1,22 @@
+{
+  "CW8.PA": { "zone": "Monde", "theme": "Large cap", "esg": "AA", "description": "Amundi MSCI World" },
+  "EWLD.PA": { "zone": "Monde", "theme": "Large cap", "esg": "A", "description": "Amundi MSCI World Distribution" },
+  "EWZ.PA": { "zone": "USA", "theme": "Large cap", "esg": "A", "description": "Amundi S&P 500" },
+  "EMIM.PA": { "zone": "Émergents", "theme": "Emerging", "esg": "A", "description": "Amundi Emerging Markets" },
+  "MEUD.PA": { "zone": "Europe", "theme": "Large cap", "esg": "AA", "description": "Lyxor Euro Stoxx 50" },
+  "MEUH.PA": { "zone": "Europe", "theme": "Large cap", "esg": "A", "description": "Lyxor MSCI Europe" },
+  "CSSX5E.PA": { "zone": "Europe", "theme": "Large cap", "esg": "AA", "description": "Amundi Euro Stoxx 50" },
+  "CAC.PA": { "zone": "France", "theme": "Large cap", "esg": "A", "description": "Amundi CAC 40" },
+  "DAX.PA": { "zone": "Allemagne", "theme": "Large cap", "esg": "A", "description": "Amundi DAX" },
+  "FTSE.PA": { "zone": "UK", "theme": "Large cap", "esg": "A", "description": "Amundi FTSE 100" },
+  "SPY": { "zone": "USA", "theme": "Large cap", "esg": "B", "description": "SPDR S&P 500" },
+  "QQQ": { "zone": "USA", "theme": "Technologie", "esg": "A", "description": "Invesco QQQ" },
+  "VTI": { "zone": "USA", "theme": "Total Market", "esg": "A", "description": "Vanguard Total Stock Market" },
+  "VXUS": { "zone": "Monde", "theme": "International", "esg": "A", "description": "Vanguard Total International" },
+  "BND": { "zone": "USA", "theme": "Obligations", "esg": "A", "description": "Vanguard Total Bond Market" },
+  "VEA": { "zone": "Developed", "theme": "International", "esg": "A", "description": "Vanguard Developed Markets" },
+  "VWO": { "zone": "Émergents", "theme": "Emerging", "esg": "A", "description": "Vanguard Emerging Markets" },
+  "IWM": { "zone": "USA", "theme": "Small cap", "esg": "A", "description": "iShares Russell 2000" },
+  "EFA": { "zone": "Developed", "theme": "International", "esg": "A", "description": "iShares MSCI EAFE" },
+  "EEM": { "zone": "Émergents", "theme": "Emerging", "esg": "A", "description": "iShares MSCI Emerging Markets" }
+}
