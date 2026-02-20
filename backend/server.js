@@ -273,11 +273,11 @@ app.get('/api/predict/stock', async (req, res) => {
       try {
         // Nouveau format pour le Router Hugging Face (OpenAI-compatible)
         const lastPrices = prices.slice(-15).map(p => Math.round(p)).join(', ')
-        const prompt = `The stock prices for the last 15 days are: ${lastPrices}. Predict the next 5 prices as a simple comma-separated list of numbers only (e.g. 170, 172, 175, 178, 180).`
+        const prompt = `The stock prices for the last 15 days are: ${lastPrices}. Predict the next 15 prices as a simple comma-separated list of numbers only (e.g. 170, 172, 175, 178, 180...).`
         
         console.log('[predict] Appel Hugging Face Router...', prompt)
         
-        const modelId = 'mistralai/Mistral-7B-Instruct-v0.3'
+        const modelId = 'Qwen/Qwen2.5-72B-Instruct'
         
         const response = await fetch('https://router.huggingface.co/v1/chat/completions', {
           headers: {
@@ -288,10 +288,10 @@ app.get('/api/predict/stock', async (req, res) => {
           body: JSON.stringify({
             model: modelId,
             messages: [
-              { role: 'system', content: 'You are a financial forecasting assistant. Always respond only with a list of 5 comma-separated numbers.' },
+              { role: 'system', content: 'You are a financial forecasting assistant. Always respond only with a list of 15 comma-separated numbers.' },
               { role: 'user', content: prompt }
             ],
-            max_tokens: 50
+            max_tokens: 100
           }),
         })
 
@@ -308,8 +308,8 @@ app.get('/api/predict/stock', async (req, res) => {
         const numbers = generatedText.split(/[\s,]+/).map(s => parseFloat(s)).filter(n => !isNaN(n))
         
         if (numbers.length > 0) {
-          // On prend les 5 premiers nombres trouvés
-          forecast = numbers.slice(0, 5)
+          // On prend les 15 premiers nombres trouvés
+          forecast = numbers.slice(0, 15)
           modelUsed = modelId
         } else {
           throw new Error('Pas de nombres trouvés dans la réponse IA')

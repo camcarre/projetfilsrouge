@@ -239,10 +239,18 @@ export function CombinedChart({
     }
   }, [cursorPoint?.x, cursorPoint?.y, hoverValue])
 
-  // Date factice pour le tooltip (style fiche)
+  // Date pour le tooltip (historique = passé, prédiction = futur)
   const tooltipDate = hoveredIndex != null ? (() => {
     const d = new Date()
-    d.setDate(d.getDate() - (nTotal - 1 - hoveredIndex))
+    // Si l'index est dans la partie prédiction
+    if (hoveredIndex >= nHistorical) {
+      const daysIntoFuture = hoveredIndex - (nHistorical - 1)
+      d.setDate(d.getDate() + daysIntoFuture)
+    } else {
+      // Si l'index est dans l'historique
+      const daysIntoPast = (nHistorical - 1) - hoveredIndex
+      d.setDate(d.getDate() - daysIntoPast)
+    }
     return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
   })() : ''
 
