@@ -1,18 +1,17 @@
 import { Link } from 'react-router-dom'
 import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
 
-const TERMS: { term: string; definition: string }[] = [
-  { term: 'TER', definition: 'Total Expense Ratio : frais annuels de gestion d\'un fonds (gestion, garde, etc.), exprimés en % de l\'actif.' },
-  { term: 'Trackeur', definition: 'Fonds (souvent ETF) qui réplique un indice (ex. MSCI World) pour en suivre la performance.' },
-  { term: 'Réplication physique', definition: 'L\'ETF détient les titres de l\'indice. Réplication synthétique : utilisation de dérivés pour reproduire l\'indice.' },
-  { term: 'Dividend yield', definition: 'Rendement du dividende : dividende annuel / cours de l\'action, en %.' },
-  { term: 'P/E (Price/Earnings)', definition: 'Ratio cours / bénéfice par action. Mesure de valorisation : plus il est bas, plus l\'action peut être considérée comme « bon marché » (relativement).' },
-  { term: 'Capitalisation boursière', definition: 'Valeur de marché d\'une entreprise = nombre d\'actions × cours de l\'action.' },
-  { term: 'DCA (Dollar Cost Averaging)', definition: 'Investir régulièrement une même somme pour lisser le prix d\'achat et réduire l\'impact de la volatilité.' },
-  { term: 'OPCVM', definition: 'Organisme de placement collectif en valeurs mobilières : SICAV, FCP (fonds communs de placement).' },
-  { term: 'PEA', definition: 'Plan d\'épargne en actions : enveloppe fiscale française, plafond 150 000 €, avantages fiscaux sous conditions.' },
-  { term: 'Flat tax', definition: 'Prélèvement forfaitaire unique (PFU) de 30 % sur les revenus du capital (12,8 % IR + 17,2 % prélèvements sociaux).' },
+const TERMS = [
+  { term: 'Action', def: 'Titre de propriété représentant une fraction du capital d\'une entreprise. Donne droit à une part des bénéfices (dividendes) et au vote.' },
+  { term: 'ETF (Exchange Traded Fund)', def: 'Fonds d\'investissement qui réplique la performance d\'un indice (comme le CAC 40 ou le S&P 500) et s\'échange en bourse comme une action.' },
+  { term: 'DCA (Dollar Cost Averaging)', def: 'Stratégie consistant à investir une somme fixe à intervalles réguliers, quel que soit le prix du marché, pour lisser le prix d\'achat moyen.' },
+  { term: 'TER (Total Expense Ratio)', def: 'Frais de gestion annuels totaux prélevés par le gestionnaire d\'un fonds ou d\'un ETF. Plus il est bas, plus la performance nette est élevée.' },
+  { term: 'Dividende', def: 'Partie du bénéfice d\'une entreprise distribuée aux actionnaires.' },
+  { term: 'P/E Ratio (Price-to-Earnings)', def: 'Indicateur de valorisation calculé en divisant le cours de l\'action par le bénéfice net par action. Un P/E élevé peut indiquer une survalorisation ou une forte croissance attendue.' },
+  { term: 'Capitalisation boursière', def: 'Valeur totale d\'une entreprise en bourse, calculée en multipliant le nombre d\'actions en circulation par le cours actuel.' },
+  { term: 'Volatility', def: 'Mesure de l\'ampleur des variations du cours d\'un actif. Une volatilité élevée signifie un risque plus important à court terme.' },
+  { term: 'Diversification', def: 'Répartition des investissements sur différents types d\'actifs, zones géographiques ou secteurs pour réduire le risque global.' },
+  { term: 'PEA (Plan d\'Épargne en Actions)', def: 'Enveloppe fiscale française permettant d\'investir en actions européennes avec une exonération d\'impôt sur le revenu après 5 ans.' },
 ]
 
 export function GlossaryPage() {
@@ -21,22 +20,19 @@ export function GlossaryPage() {
       <div className="flex items-center gap-3 mb-6">
         <Link to="/education" className="text-[13px] text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200">← Éducation</Link>
       </div>
-      <h1 className="text-xl font-semibold text-neutral-800 dark:text-neutral-100 tracking-tight mb-2">Glossaire</h1>
+      <h1 className="text-xl font-semibold text-neutral-800 dark:text-neutral-100 tracking-tight mb-2">Glossaire financier</h1>
       <p className="text-[14px] text-neutral-500 dark:text-neutral-400 mb-6">
-        Définitions des termes financiers courants.
+        Comprendre les termes essentiels de l&apos;investissement.
       </p>
-      <Card>
-        <ul className="space-y-4">
-          {TERMS.map(({ term, definition }) => (
-            <li key={term} className="border-b border-neutral-100 dark:border-neutral-800 last:border-0 pb-4 last:pb-0">
-              <p className="font-semibold text-neutral-800 dark:text-neutral-100 text-[14px]">{term}</p>
-              <p className="text-[13px] text-neutral-600 dark:text-neutral-400 mt-1 leading-relaxed">{definition}</p>
-            </li>
-          ))}
-        </ul>
-      </Card>
-      <div className="mt-4">
-        <Link to="/education"><Button variant="secondary">Retour aux modules</Button></Link>
+      
+      <div className="space-y-4">
+        {TERMS.map(({ term, def }) => (
+          <Card key={term} title={term}>
+            <p className="text-[13px] text-neutral-600 dark:text-neutral-400 leading-relaxed">
+              {def}
+            </p>
+          </Card>
+        ))}
       </div>
     </div>
   )

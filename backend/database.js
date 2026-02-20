@@ -81,6 +81,15 @@ const schema = `
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
+  CREATE TABLE IF NOT EXISTS quiz_questions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    question TEXT NOT NULL,
+    options TEXT NOT NULL, -- JSON array of options
+    correct_index INTEGER NOT NULL,
+    category TEXT,
+    difficulty TEXT DEFAULT 'débutant'
+  );
+
   CREATE TABLE IF NOT EXISTS watchlists (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,

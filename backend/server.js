@@ -39,10 +39,6 @@ import {
 
 const app = express()
 const PORT = process.env.PORT || 3000
-const HF_API_TOKEN = process.env.HF_API_TOKEN
-
-console.log('[DEBUG] Token HF présent ?', !!process.env.HF_API_TOKEN)
-console.log('[DEBUG] Token length:', process.env.HF_API_TOKEN ? process.env.HF_API_TOKEN.length : 0)
 
 app.use(cors({ origin: '*' }))
 app.use(express.json())
@@ -611,6 +607,150 @@ app.get('/api/etfs/:ticker/history', async (req, res) => {
   } catch (err) {
     console.error('[etfs:history]', err)
     res.status(500).json({ message: 'Erreur lors du chargement des données historiques' })
+  }
+})
+
+// --- Transactions ---
+app.get('/api/transactions', (req, res) => {
+  const userId = getUserId(req)
+  if (!userId) return res.status(401).json({ message: 'Non authentifié' })
+  
+  try {
+    const transactions = db.prepare('SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC').all(userId)
+    res.json({ transactions })
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur lors de la récupération des transactions' })
+  }
+})
+
+app.post('/api/transactions', (req, res) => {
+  const userId = getUserId(req)
+  if (!userId) return res.status(401).json({ message: 'Non authentifié' })
+  
+  const { symbol, type, quantity, price, portfolioId, date } = req.body || {}
+  if (!symbol || !type || !quantity || !price) {
+    return res.status(400).json({ message: 'Champs requis: symbol, type, quantity, price' })
+  }
+  
+  try {
+    const transaction = db.transaction(() => {
+      // 1. Enregistrer la transaction
+      const info = db.prepare(`
+        INSERT INTO transactions (user_id, portfolio_id, symbol, type, quantity, price, date)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(userId, portfolioId || 'default', symbol, type, Number(quantity), Number(price), date || new Date().toISOString())
+      
+      // 2. Mettre à jour l'actif dans le portefeuille
+      const existing = db.prepare('SELECT id, quantity, unit_price FROM assets WHERE user_id = ? AND symbol = ?').get(userId, symbol)
+      
+      if (existing) {
+        let newQuantity = existing.quantity
+        let newUnitPrice = existing.unit_price
+        
+        if (type === 'BUY') {
+          // Calculer le nouveau PRU
+          const totalCost = (existing.quantity * existing.unit_price) + (Number(quantity) * Number(price))
+          newQuantity += Number(quantity)
+          newUnitPrice = totalCost / newQuantity
+        } else if (type === 'SELL') {
+          newQuantity -= Number(quantity)
+          if (newQuantity < 0) throw new Error('Quantité insuffisante')
+        }
+        
+        if (newQuantity === 0) {
+          db.prepare('DELETE FROM assets WHERE id = ?').run(existing.id)
+        } else {
+          db.prepare('UPDATE assets SET quantity = ?, unit_price = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+            .run(newQuantity, newUnitPrice, existing.id)
+        }
+      } else if (type === 'BUY') {
+        // Créer l'actif s'il n'existe pas
+        db.prepare(`
+          INSERT INTO assets (user_id, portfolio_id, name, symbol, category, quantity, unit_price)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `).run(userId, portfolioId || 'default', symbol, symbol, 'action', Number(quantity), Number(price))
+      }
+      
+      return info.lastInsertRowid
+    })
+    
+    const transactionId = transaction()
+    res.status(201).json({ id: transactionId, message: 'Transaction enregistrée' })
+  } catch (err) {
+    res.status(400).json({ message: err.message })
+  }
+})
+
+// --- Notifications ---
+app.get('/api/notifications', (req, res) => {
+  const userId = getUserId(req)
+  if (!userId) return res.status(401).json({ message: 'Non authentifié' })
+  
+  const notifications = db.prepare('SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 20').all(userId)
+  res.json({ notifications })
+})
+
+app.post('/api/notifications/read', (req, res) => {
+  const userId = getUserId(req)
+  if (!userId) return res.status(401).json({ message: 'Non authentifié' })
+  
+  db.prepare('UPDATE notifications SET read = 1 WHERE user_id = ?').run(userId)
+  res.status(204).send()
+})
+
+// --- Quiz (Généré par IA) ---
+app.get('/api/quiz/generate', async (req, res) => {
+  const userId = getUserId(req)
+  if (!userId) return res.status(401).json({ message: 'Non authentifié' })
+  
+  if (!process.env.HF_API_TOKEN) {
+    return res.status(503).json({ message: 'IA non configurée' })
+  }
+
+  try {
+    const prompt = `Génère 5 questions de quiz sur la finance (investissement, bourse, crypto, fiscalité française). 
+    Pour chaque question, donne 3 options et l'index de la bonne réponse (0, 1 ou 2).
+    Réponds uniquement au format JSON strict, sans texte avant ou après, comme ceci :
+    [
+      {"q": "Ma question ?", "options": ["Rép A", "Rép B", "Rép C"], "correct": 0},
+      ...
+    ]`
+
+    const response = await fetch('https://router.huggingface.co/v1/chat/completions', {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.HF_API_TOKEN}`
+      },
+      method: 'POST',
+      body: JSON.stringify({
+        model: 'Qwen/Qwen2.5-72B-Instruct',
+        messages: [
+          { role: 'system', content: 'Tu es un expert en éducation financière. Tu réponds uniquement en JSON valide.' },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 1000,
+        temperature: 0.7
+      }),
+    })
+
+    if (!response.ok) throw new Error('Erreur HF')
+
+    const result = await response.json()
+    const content = result.choices?.[0]?.message?.content || '[]'
+    
+    // Nettoyer le JSON si l'IA a mis des balises ```json
+    const jsonStr = content.replace(/```json/g, '').replace(/```/g, '').trim()
+    const questions = JSON.parse(jsonStr)
+
+    res.json({ questions })
+  } catch (err) {
+    console.error('[quiz:generate]', err)
+    // Fallback statique si l'IA échoue
+    const fallback = [
+      { q: 'Que signifie TER ?', options: ['Total Expense Ratio', 'Taux d\'épargne réel', 'Titre émis'], correct: 0 },
+      { q: 'Qu\'est-ce que le DCA ?', options: ['Un ETF', 'Investir régulièrement', 'Un indice'], correct: 1 }
+    ]
+    res.json({ questions: fallback, isFallback: true })
   }
 })
 

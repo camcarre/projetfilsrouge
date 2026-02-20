@@ -146,3 +146,21 @@ export async function removeAsset(assetId: string): Promise<{ error: Error | nul
   }
   return { error: new Error('Aucun backend configuré') }
 }
+
+/** Récupère l'historique des transactions. */
+export async function fetchTransactions(): Promise<{ transactions: any[] }> {
+  if (isCustomApiConfigured()) {
+    const { data } = await api.get<{ transactions: any[] }>('/api/transactions')
+    return { transactions: data?.transactions ?? [] }
+  }
+  return { transactions: [] }
+}
+
+/** Enregistre une nouvelle transaction. */
+export async function addTransaction(transaction: any): Promise<{ error: Error | null }> {
+  if (isCustomApiConfigured()) {
+    const { error } = await api.post('/api/transactions', transaction)
+    return { error: error ? new Error(error.message) : null }
+  }
+  return { error: new Error('Aucun backend configuré') }
+}
