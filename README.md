@@ -2,6 +2,50 @@
 
 Une Progressive Web App (PWA) pour visualiser vos finances personnelles, analyser votre portefeuille et recevoir des recommandations personnalisées d'ETF.
 
+**Documentation** : cahier des charges, répartition des tâches, backend, structure → voir le dossier **[docs/](docs/)**.
+
+## Lancer le projet (front + back)
+
+Tout est prêt : le **backend** est dans **`../backend`**, le fichier **`.env`** est configuré pour l’appeler.
+
+### Première fois uniquement
+
+Installer les dépendances du **front** et du **back** :
+
+```bash
+cd "/Users/theodelporte/Cours et Projets/Projet Fil Rouge/Filrouge/projetfilsrouge"
+npm install
+
+cd "../backend"
+npm install
+```
+
+### Lancer en une commande
+
+Depuis le dossier **projetfilsrouge** :
+
+```bash
+cd "/Users/theodelporte/Cours et Projets/Projet Fil Rouge/Filrouge/projetfilsrouge"
+npm run dev:all
+```
+
+Ça démarre le **backend** (http://localhost:3000) et le **front** (http://localhost:5173). Ouvre **http://localhost:5173** dans le navigateur.  
+**Connexion** et **Portefeuille** sont reliés au backend (auth + actifs) : connecte-toi pour voir et ajouter tes actifs.
+
+### Lancer en deux terminaux (alternative)
+
+**Terminal 1 – Backend :**
+```bash
+cd "/Users/theodelporte/Cours et Projets/Projet Fil Rouge/Filrouge/backend"
+npm run dev
+```
+
+**Terminal 2 – Front :**
+```bash
+cd "/Users/theodelporte/Cours et Projets/Projet Fil Rouge/Filrouge/projetfilsrouge"
+npm run dev
+```
+
 ## 🚀 Fonctionnalités
 
 ### 📈 Visualisation Financière
@@ -23,84 +67,72 @@ Une Progressive Web App (PWA) pour visualiser vos finances personnelles, analyse
 - Synchronisation en arrière-plan
 
 ### 🔒 Sécurité
-- Authentification sécurisée via Supabase
-- Chiffrement des données sensibles
-- Conformité RGPD
-- Audit trail complet
+- Authentification via le backend (token Bearer)
+- Données sensibles côté serveur
+- Conformité RGPD à prévoir
 
 ## 🛠️ Stack Technique
 
 ### Frontend PWA
-- **Framework**: React/Vue.js (à décider)
-- **UI**: Material-UI/Ant Design
-- **PWA**: Workbox, Service Worker
+- **Framework**: Preact + TypeScript (TSX)
+- **UI**: Tailwind CSS
+- **PWA**: vite-plugin-pwa, Service Worker
 - **Offline**: IndexedDB, Cache API
-- **Tests**: Jest, Lighthouse
+- **État**: Redux
 
-### Backend - Supabase (BaaS)
-- **Database**: PostgreSQL
-- **Auth**: Supabase Auth (JWT, OAuth)
-- **API**: REST + Realtime subscriptions
-- **Edge Functions**: Calculs financiers
-- **Storage**: Fichiers et exports
+### Backend – API custom (Express)
+- **Serveur**: Express (dossier `../backend`)
+- **Auth**: inscription / connexion email, token JWT-like
+- **API**: REST (auth + CRUD actifs)
+- **Données**: en mémoire (dev) ; à remplacer par une BDD pour la prod
 
-### Sources de Données
+### Sources de données (à intégrer)
 - **APIs financières**: Yahoo Finance, Alpha Vantage
 - **Données ETF**: Morningstar, TrackInsight
 - **ESG**: MSCI, Sustainalytics
 
 ## 📋 Prérequis
 
-- Node.js 16+ 
+- Node.js 16+
 - Navigateur moderne (Chrome 90+, Firefox 88+, Safari 14+)
-- Compte Supabase (gratuit pour commencer)
-- Compte GitHub (pour collaboration)
 
-## 🏃‍♂️ Démarrage Rapide
+## 🏃‍♂️ Démarrage rapide
 
-### 1. Cloner le Repository
+### 1. Installer les dépendances (front + back)
+
 ```bash
-git clone https://github.com/votre-username/projet-finance-pwa.git
-cd projet-finance-pwa
-```
-
-### 2. Installer les Dépendances
-```bash
+cd projetfilsrouge
 npm install
-# ou
-yarn install
+
+cd ../backend
+npm install
 ```
 
-### 3. Configuration Supabase
-1. Créer un projet sur [Supabase](https://supabase.com)
-2. Copier les clés d'API dans `.env.local`:
-```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
+### 2. Configurer l’API
 
-### 4. Lancer le Développement
+Copier `.env.example` en `.env` dans `projetfilsrouge` (déjà fait si `VITE_API_URL=http://localhost:3000`).
+
+### 3. Lancer le développement
+
+Depuis **projetfilsrouge** :
+
 ```bash
-npm run dev
-# ou
-yarn dev
+npm run dev:all
 ```
 
-### 5. Build Production
+→ Backend sur http://localhost:3000, front sur http://localhost:5173.
+
+### 4. Build production
+
 ```bash
 npm run build
-# ou
-yarn build
 ```
 
 ## 👥 Collaboration (Équipe de 2)
 
 ### Organisation
 - **Phase 1** (6-8 semaines): Frontend PWA ensemble
-  - Camille: UI/UX, responsive design
-  - Théo: Service Worker, offline logic
-- **Phase 2** (3-4 semaines): Configuration Supabase
-  - Ensemble: Database, auth, edge functions
+- **Phase 2** (4-6 semaines): Backend (API custom) – auth, actifs, puis ETF, analytics, recommandations
 - **Phase 3** (2-3 semaines): Finalisation
 - **Phase 4** (1-2 semaines): Déploiement
 
