@@ -123,6 +123,7 @@ export function CombinedChart({
     }
     // Recherche simple du point le plus proche
     let minDist = Infinity
+    let index = 0
     allPoints.forEach((p, i) => {
         const dist = Math.abs(p.x - x)
         if (dist < minDist) {
