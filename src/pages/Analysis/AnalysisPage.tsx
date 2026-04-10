@@ -1,5 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect } from 'preact/hooks'
-import gsap from 'gsap'
+import { useState } from 'preact/hooks'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'

@@ -45,7 +45,7 @@ export function QuizPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <Spinner size="lg" />
+        <Spinner size="md" />
         <p className="text-[14px] text-neutral-500 animate-pulse">L&apos;IA génère vos questions personnalisées...</p>
       </div>
     )

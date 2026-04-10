@@ -21,9 +21,12 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 
 # Charger .env depuis la racine du projet (un niveau au-dessus de backend/)
-_ROOT = Path(__file__).parent
-load_dotenv(_ROOT / ".env")
-load_dotenv(_ROOT / ".env.local")
+_BACKEND_DIR = Path(__file__).parent
+_PROJECT_ROOT = _BACKEND_DIR.parent
+load_dotenv(_PROJECT_ROOT / ".env")
+load_dotenv(_PROJECT_ROOT / ".env.local")
+load_dotenv(_BACKEND_DIR / ".env")
+load_dotenv(_BACKEND_DIR / ".env.local")
 
 from database import get_db  # noqa: E402 — après load_dotenv
 from services.yahoo_etf_service import (  # noqa: E402

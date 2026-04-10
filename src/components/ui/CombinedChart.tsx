@@ -121,11 +121,6 @@ export function CombinedChart({
       onHover?.(null)
       return
     }
-    // Trouver le point le plus proche en X
-    // Approximation linéaire
-    const relativeX = x - padL
-    let index = 0
-    
     // Recherche simple du point le plus proche
     let minDist = Infinity
     allPoints.forEach((p, i) => {
