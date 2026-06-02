@@ -27,8 +27,8 @@ PLAN ──▶ APPLY ──▶ UNIFY
 
 Last session: 2026-06-02
 Stopped at: Plans 06-02 + 07-01 créés
-Next action: /paul:apply .paul/phases/07-sprint1-features/07-01-PLAN.md (Export CSV)
-Resume file: .paul/phases/07-sprint1-features/07-01-PLAN.md
+Next action: Phase 07-02 Skeleton loaders + états vides, ou merger PR #10 dans main
+Resume file: .paul/phases/07-sprint1-features/07-01-SUMMARY.md
 
 ## Plans créés (prêts à exécuter)
 
