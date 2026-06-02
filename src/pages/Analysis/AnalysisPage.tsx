@@ -1,13 +1,14 @@
-import { useState, useRef, useEffect, useLayoutEffect } from 'preact/hooks'
-import gsap from 'gsap'
+import { useState } from 'preact/hooks'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { Alert } from '@/components/ui/Alert'
 import { CombinedChart } from '@/components/ui/CombinedChart'
 import { getStockPrediction } from '@/services/predictionService'
+import { getIndicators, getRiskMetrics } from '@/services/analyticsService'
+import type { IndicatorsResponse, RiskMetrics } from '@/types/analytics'
 
-/** Extrait une valeur numérique ou une série du retour API pour l’affichage */
+/** Extrait une valeur numérique ou une série du retour API pour l'affichage */
 function parsePrediction(prediction: unknown): { value?: number; series?: number[]; history?: number[]; raw: unknown } {
   const raw = prediction
   let value: number | undefined
@@ -38,7 +39,7 @@ function parsePrediction(prediction: unknown): { value?: number; series?: number
   return { value, series, history, raw }
 }
 
-/** Données factices : évolution actuelle (réel) + prédiction pour l’aperçu */
+/** Données factices : évolution actuelle (réel) + prédiction pour l'aperçu */
 const MOCK_HISTORICAL = [182, 183, 181, 184, 185, 186, 185, 187, 188, 189, 190, 189, 191, 192]
 const MOCK_PREDICTION_SERIES = [192, 193.5, 195, 196.2, 197, 198.5]
 const MOCK_PREVIEW = {
@@ -82,6 +83,13 @@ const AVAILABLE_SYMBOLS = [
   { symbol: 'EURUSD=X', name: 'EUR/USD' },
 ]
 
+/** Filtre l'historique selon la période sélectionnée */
+function filterByPeriod(data: number[], period: '1M' | '6M' | '1Y' | 'MAX'): number[] {
+  if (period === '1M') return data.slice(-22)
+  if (period === '6M') return data.slice(-130)
+  return data
+}
+
 export function AnalysisPage() {
   const [symbol, setSymbol] = useState(AVAILABLE_SYMBOLS[0].symbol)
   const [result, setResult] = useState<{ symbol: string; prediction: unknown } | null>(null)
@@ -91,6 +99,14 @@ export function AnalysisPage() {
   const [chartHoverValue, setChartHoverValue] = useState<number | null>(null)
   const [predictionHistory, setPredictionHistory] = useState<PredictionHistoryEntry[]>(loadPredictionHistory)
 
+  const [indicators, setIndicators] = useState<IndicatorsResponse | null>(null)
+  const [indicatorsError, setIndicatorsError] = useState<string | null>(null)
+  const [indicatorsLoading, setIndicatorsLoading] = useState(false)
+
+  const [riskMetrics, setRiskMetrics] = useState<RiskMetrics | null>(null)
+  const [riskError, setRiskError] = useState<string | null>(null)
+  const [riskLoading, setRiskLoading] = useState(false)
+
   const handlePredict = async (overrideSymbol?: string) => {
     const sym = (overrideSymbol ?? symbol).trim()
     if (!sym) return
@@ -99,23 +115,36 @@ export function AnalysisPage() {
     setResult(null)
     setShowPreview(false)
     setChartHoverValue(null)
+    setIndicators(null)
+    setIndicatorsError(null)
+    setRiskMetrics(null)
+    setRiskError(null)
     setLoading(true)
-    const { data, error: err } = await getStockPrediction(sym)
+    setIndicatorsLoading(true)
+    setRiskLoading(true)
+
+    const [predResult, indResult, riskResult] = await Promise.all([
+      getStockPrediction(sym),
+      getIndicators(sym),
+      getRiskMetrics(sym),
+    ])
+
     setLoading(false)
-    if (err) {
-      let msg = err.message
+    setIndicatorsLoading(false)
+    setRiskLoading(false)
+
+    if (predResult.error) {
+      let msg = predResult.error.message
       if (msg.includes('401') || msg.includes('Non authentifié'))
         msg = 'Session expirée ou invalide (backend redémarré ?). Reconnecte-toi puis réessaie.'
       else if (msg.includes('503') || msg.includes('HF_TOKEN') || msg.includes('non configurée'))
         msg = 'Prédiction non disponible : ajoute HF_TOKEN (ou HUGGINGFACE_TOKEN) dans le fichier .env du backend, puis redémarre le serveur.'
       setError(msg)
-      return
-    }
-    if (data) {
-      setResult(data)
-      const parsed = parsePrediction(data.prediction)
+    } else if (predResult.data) {
+      setResult(predResult.data)
+      const parsed = parsePrediction(predResult.data.prediction)
       if (typeof parsed.value === 'number' && !Number.isNaN(parsed.value)) {
-        const entry: PredictionHistoryEntry = { symbol: data.symbol, date: new Date().toISOString(), value: parsed.value }
+        const entry: PredictionHistoryEntry = { symbol: predResult.data.symbol, date: new Date().toISOString(), value: parsed.value }
         setPredictionHistory((prev) => {
           const next = [...prev, entry].slice(-MAX_HISTORY)
           savePredictionHistory(next)
@@ -123,6 +152,12 @@ export function AnalysisPage() {
         })
       }
     }
+
+    if (indResult.error) setIndicatorsError(indResult.error.message)
+    else setIndicators(indResult.data)
+
+    if (riskResult.error) setRiskError(riskResult.error.message)
+    else setRiskMetrics(riskResult.data)
   }
 
   const [selectedPeriod, setSelectedPeriod] = useState<'1M' | '6M' | '1Y' | 'MAX'>('1Y')
@@ -132,10 +167,32 @@ export function AnalysisPage() {
   const rawModel = (parsed?.raw as any)?.model
   const historical = showPreview ? MOCK_HISTORICAL : parsed?.history ?? []
   const predictionSeries = parsed?.series ?? (showPreview ? MOCK_PREDICTION_SERIES : [])
-  const hasCombinedChart = historical.length >= 2 && predictionSeries.length >= 2
+  const filteredHistorical = filterByPeriod(historical, selectedPeriod)
+  const filteredPrediction = selectedPeriod === '1M'
+    ? predictionSeries.slice(0, 5)
+    : selectedPeriod === '6M'
+    ? predictionSeries.slice(0, Math.ceil(predictionSeries.length * 0.5))
+    : predictionSeries
+  const hasCombinedChart = filteredHistorical.length >= 2 && filteredPrediction.length >= 2
   const lastVal = parsed?.value ?? (predictionSeries.length > 0 ? predictionSeries[predictionSeries.length - 1] : 0)
   const firstVal = historical.length > 0 ? historical[0] : lastVal
   const variationPct = firstVal ? ((lastVal - firstVal) / firstVal) * 100 : 0
+
+  // Indicateurs — dernières valeurs non-null
+  const lastRsi = indicators ? [...indicators.rsi].reverse().find((v) => v !== null) ?? null : null
+  const lastMacdLine = indicators ? [...indicators.macd_line].reverse().find((v) => v !== null) ?? null : null
+  const lastMacdSignal = indicators ? [...indicators.macd_signal].reverse().find((v) => v !== null) ?? null : null
+  const lastMacdHist = indicators ? [...indicators.macd_histogram].reverse().find((v) => v !== null) ?? null : null
+  const lastBbUpper = indicators ? [...indicators.bollinger_upper].reverse().find((v) => v !== null) ?? null : null
+  const lastBbMiddle = indicators ? [...indicators.bollinger_middle].reverse().find((v) => v !== null) ?? null : null
+  const lastBbLower = indicators ? [...indicators.bollinger_lower].reverse().find((v) => v !== null) ?? null : null
+
+  function rsiBadge(rsi: number | null) {
+    if (rsi === null) return null
+    if (rsi < 30) return { label: 'Survente', cls: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-700/40' }
+    if (rsi > 70) return { label: 'Surachat', cls: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-200/60 dark:border-red-700/40' }
+    return { label: 'Neutre', cls: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700' }
+  }
 
   return (
     <div>
@@ -177,7 +234,7 @@ export function AnalysisPage() {
           </Button>
           {!result && (
             <Button variant="secondary" onClick={() => { setError(null); setChartHoverValue(null); setShowPreview((p) => !p) }}>
-              {showPreview ? "Masquer l’aperçu" : "Voir l’aperçu"}
+              {showPreview ? "Masquer l'aperçu" : "Voir l'aperçu"}
             </Button>
           )}
         </div>
@@ -256,7 +313,7 @@ export function AnalysisPage() {
                   onMouseEnter={() => setChartHovered(true)}
                   onMouseLeave={() => setChartHovered(false)}
                 >
-                  <CombinedChart historical={historical} prediction={predictionSeries} onHover={setChartHoverValue} />
+                  <CombinedChart historical={filteredHistorical} prediction={filteredPrediction} onHover={setChartHoverValue} />
                 </div>
                 {!showPreview && historical.length > 0 && historical.every((v) => v === historical[0]) && (
                   <p className="mt-2 text-[11px] text-neutral-500 dark:text-neutral-500">
@@ -279,29 +336,154 @@ export function AnalysisPage() {
         )}
       </Card>
 
-      <Card title="Types d'analyse" className="mb-5">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="rounded-xl border border-l-4 border-l-emerald-500 dark:border-l-emerald-400 bg-emerald-50/30 dark:bg-emerald-900/10 px-4 py-3 flex-1">
-            <p className="text-[13px] font-medium text-neutral-800 dark:text-neutral-100">Prédiction ML</p>
-            <p className="text-[12px] text-neutral-500 dark:text-neutral-400">{rawModel ? `Modèle : ${rawModel}` : 'Modèle Hugging Face — Actions et ETF'}</p>
+      {/* ── Indicateurs techniques ─────────────────────────────────────────── */}
+      <Card title="Indicateurs techniques" className="mb-5">
+        {indicatorsLoading && (
+          <div className="flex items-center gap-2 text-[13px] text-neutral-500 dark:text-neutral-400">
+            <Spinner size="sm" /> Chargement des indicateurs…
           </div>
-          <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
-            Prévu : Technique (RSI, MACD), Fondamentale (P/E), Sentiment (actualités).
+        )}
+        {indicatorsError && !indicatorsLoading && (
+          <Alert variant="error">{indicatorsError}</Alert>
+        )}
+        {!indicators && !indicatorsLoading && !indicatorsError && (
+          <p className="text-[13px] text-neutral-500 dark:text-neutral-400">
+            Lance une analyse ci-dessus pour afficher RSI, MACD et Bandes de Bollinger.
           </p>
-        </div>
+        )}
+        {indicators && !indicatorsLoading && (
+          <div className="space-y-4">
+            {/* RSI */}
+            <div className="flex items-center gap-3">
+              <span className="text-[12px] font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wider w-12">RSI</span>
+              <span className="text-lg font-semibold tabular-nums text-neutral-800 dark:text-neutral-100">
+                {lastRsi !== null ? lastRsi.toFixed(1) : '—'}
+              </span>
+              {lastRsi !== null && (() => {
+                const badge = rsiBadge(lastRsi)
+                return badge ? (
+                  <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full border ${badge.cls}`}>
+                    {badge.label}
+                  </span>
+                ) : null
+              })()}
+            </div>
+            {/* MACD */}
+            <div>
+              <p className="text-[11px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-2">MACD</p>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: 'Ligne', value: lastMacdLine },
+                  { label: 'Signal', value: lastMacdSignal },
+                  { label: 'Histogramme', value: lastMacdHist },
+                ].map(({ label, value }) => (
+                  <div key={label} className="rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800/30 px-3 py-2">
+                    <p className="text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-0.5">{label}</p>
+                    <p className={`text-sm font-semibold tabular-nums ${
+                      value === null ? 'text-neutral-400' :
+                      value > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+                    }`}>
+                      {value !== null ? value.toFixed(3) : '—'}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Bollinger */}
+            <div>
+              <p className="text-[11px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-2">Bandes de Bollinger</p>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: 'Supérieure', value: lastBbUpper },
+                  { label: 'Médiane', value: lastBbMiddle },
+                  { label: 'Inférieure', value: lastBbLower },
+                ].map(({ label, value }) => (
+                  <div key={label} className="rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800/30 px-3 py-2">
+                    <p className="text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-0.5">{label}</p>
+                    <p className="text-sm font-semibold tabular-nums text-neutral-800 dark:text-neutral-100">
+                      {value !== null ? value.toFixed(2) : '—'}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* ── Risque ──────────────────────────────────────────────────────── */}
+        <Card title="Risque">
+          {riskLoading && (
+            <div className="flex items-center gap-2 text-[13px] text-neutral-500 dark:text-neutral-400">
+              <Spinner size="sm" /> Calcul du risque…
+            </div>
+          )}
+          {riskError && !riskLoading && (
+            <Alert variant="error">{riskError}</Alert>
+          )}
+          {!riskMetrics && !riskLoading && !riskError && (
+            <p className="text-[13px] text-neutral-600 dark:text-neutral-400">
+              Lance une analyse pour afficher VaR, drawdown et Sharpe.
+            </p>
+          )}
+          {riskMetrics && !riskLoading && (
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                {
+                  label: 'Perte max 1j (95%)',
+                  value: riskMetrics.var_95,
+                  format: (v: number) => `${v.toFixed(2)}%`,
+                  colorCls: riskMetrics.var_95 < -2 ? 'border-l-red-500 dark:border-l-red-400 text-red-600 dark:text-red-400' : 'border-l-neutral-400 text-neutral-800 dark:text-neutral-100',
+                },
+                {
+                  label: 'Perte max 1j (99%)',
+                  value: riskMetrics.var_99,
+                  format: (v: number) => `${v.toFixed(2)}%`,
+                  colorCls: riskMetrics.var_99 < -3 ? 'border-l-red-500 dark:border-l-red-400 text-red-600 dark:text-red-400' : 'border-l-neutral-400 text-neutral-800 dark:text-neutral-100',
+                },
+                {
+                  label: 'Drawdown max',
+                  value: riskMetrics.max_drawdown,
+                  format: (v: number) => `${v.toFixed(2)}%`,
+                  colorCls: 'border-l-red-500 dark:border-l-red-400 text-red-600 dark:text-red-400',
+                },
+                {
+                  label: 'Volatilité ann.',
+                  value: riskMetrics.volatility,
+                  format: (v: number) => `${v.toFixed(2)}%`,
+                  colorCls: 'border-l-neutral-400 text-neutral-800 dark:text-neutral-100',
+                },
+                {
+                  label: 'Sharpe ratio',
+                  value: riskMetrics.sharpe_ratio,
+                  format: (v: number) => v.toFixed(2),
+                  colorCls: riskMetrics.sharpe_ratio > 1
+                    ? 'border-l-emerald-500 dark:border-l-emerald-400 text-emerald-600 dark:text-emerald-400'
+                    : riskMetrics.sharpe_ratio < 0
+                    ? 'border-l-red-500 dark:border-l-red-400 text-red-600 dark:text-red-400'
+                    : 'border-l-neutral-400 text-neutral-800 dark:text-neutral-100',
+                },
+              ].map(({ label, value, format, colorCls }) => (
+                <div key={label} className={`analysis-metric-card rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800/30 border-l-4 pl-3 pr-2 py-3 transition-all duration-300 ease-out hover:shadow-md hover:-translate-y-px ${colorCls.split(' ')[0]}`}>
+                  <p className="text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">{label}</p>
+                  <p className={`text-sm font-semibold tabular-nums ${colorCls.split(' ').slice(1).join(' ')}`}>
+                    {format(value)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* ── Graphiques interactifs ────────────────────────────────────── */}
         <Card title="Graphiques interactifs">
           <p className="text-[13px] text-neutral-600 dark:text-neutral-400">
             Courbes, camemberts, histogrammes. Corrélation entre actifs, comparaison à un indice.
           </p>
         </Card>
-        <Card title="Risque">
-          <p className="text-[13px] text-neutral-600 dark:text-neutral-400">
-            VaR, volatilité, drawdown. Benchmarking et simulations (Monte Carlo).
-          </p>
-        </Card>
+
+        {/* ── Historique des prédictions ────────────────────────────────── */}
         <Card title="Historique des prédictions">
           <p className="text-[13px] text-neutral-600 dark:text-neutral-400 mb-3">
             Dernières prédictions enregistrées. Cliquez sur « Réexécuter » pour relancer une analyse.

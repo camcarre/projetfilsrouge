@@ -66,7 +66,7 @@ export function PortfolioPage() {
     unitPrice: 0,
     currency: 'EUR',
   })
-  const [marketPrice, setMarketPrice] = useState<number | null>(null)
+  const [_marketPrice, setMarketPrice] = useState<number | null>(null)
   const [loadingPrice, setLoadingPrice] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [goals, setGoals] = useState<PortfolioGoals | null>(() => loadGoalsFromStorage())

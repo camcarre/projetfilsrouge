@@ -2,28 +2,30 @@
 
 ## Current Position
 
-Milestone: Polish UX/UI (v0.1)
-Phase: Transition — Phase 04 complet, choisir phase suivante
-Status: Phase 04 COMPLETE — prêt pour la suite
-Last activity: 2026-04-02 — Phase 04 complète (04-03 UNIFY)
+Milestone: Advanced Analytics (v0.2)
+Phase: 05 — Advanced Analytics — Planning
+Plan: 05-01 APPLY complete
+Status: APPLY complet, prêt pour UNIFY
+Last activity: 2026-04-02 — 05-01 appliqué (analytics_service + endpoints + ETS)
 
 Progress:
 - Migration Backend: [██████████] 100% ✓
 - Phase 04: [██████████] 100% (3/3 plans complets)
+- Phase 05: [█████░░░░░] 50% (05-01 ✓ loop fermé, 05-02 à appliquer)
 
 ## Loop Position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [Phase 04 complète]
+  ✓        ✓        ✓     [05-01 loop fermé]
 ```
 
 ## Session Continuity
 
 Last session: 2026-04-02
-Stopped at: Phase 04 complète — transition exécutée
-Next action: Choisir entre Phase 01 (Quick Wins UI), Phase 02 (Feedback Components) ou Phase 03 (UX Flows)
-Resume file: .paul/ROADMAP.md
+Stopped at: 05-01 UNIFY complet — 05-02 frontend prêt à appliquer
+Next action: /paul:apply .paul/phases/05-advanced-analytics/05-02-PLAN.md
+Resume file: .paul/phases/05-advanced-analytics/05-02-PLAN.md
 
 ## En attente (phases restantes)
 

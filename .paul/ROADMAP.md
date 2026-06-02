@@ -37,3 +37,14 @@ Plans: 3/3
 - Breadcrumb Education
 - Pull-to-refresh indicateur + bouton refresh
 Status: Not started
+
+---
+
+## Milestone v0.2 — Advanced Analytics (In progress)
+
+### Phase 05 — Advanced Analytics (Planning)
+Implémentation complète de la page Analysis (indicateurs techniques + prédiction améliorée + métriques de risque) :
+- Plan 01 : Backend — analytics_service.py (pandas-ta RSI/MACD/Bollinger + statsmodels ETS/ARIMA + VaR/drawdown) + 3 nouveaux endpoints FastAPI
+- Plan 02 : Frontend — connecter les endpoints + implémenter cards Analysis (indicateurs, risque, filtrage période réel)
+Status: Planning
+Depends on: Phase 04 ✅

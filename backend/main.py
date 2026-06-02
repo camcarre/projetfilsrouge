@@ -11,6 +11,7 @@ import uvicorn
 import numpy as np
 import requests as http_requests
 import yfinance as yf
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, List
@@ -33,6 +34,7 @@ from services.yahoo_etf_service import (  # noqa: E402
     get_etf_holdings,
     validate_ticker,
 )
+from services.analytics_service import get_indicators, get_risk_metrics  # noqa: E402
 
 app = FastAPI(title="Finance PWA API")
 
@@ -218,25 +220,16 @@ async def get_assets(
         params.append(portfolioId)
     assets = db.execute(query, params).fetchall()
 
-    enriched = []
-    for a in assets:
+    def _fetch_price(a):
         try:
-            ticker = yf.Ticker(a["symbol"])
-            live_price = ticker.fast_info.last_price or a["unit_price"]
-            change = 0.0
-            try:
-                hist = ticker.history(period="2d")
-                if len(hist) >= 2:
-                    prev = hist["Close"].iloc[-2]
-                    curr = hist["Close"].iloc[-1]
-                    change = round((curr - prev) / prev * 100, 2) if prev else 0.0
-            except Exception:
-                pass
+            fi = yf.Ticker(a["symbol"]).fast_info
+            live_price = fi.last_price if hasattr(fi, "last_price") and fi.last_price else a["unit_price"]
+            prev = fi.previous_close if hasattr(fi, "previous_close") and fi.previous_close else None
+            change = round((live_price - prev) / prev * 100, 2) if prev else 0.0
         except Exception:
             live_price = a["unit_price"]
             change = 0.0
-
-        enriched.append({
+        return {
             "id": a["id"],
             "name": a["name"],
             "symbol": a["symbol"],
@@ -246,7 +239,13 @@ async def get_assets(
             "originalPrice": a["unit_price"],
             "currency": a["currency"],
             "change": change,
-        })
+        }
+
+    enriched = [None] * len(assets)
+    with ThreadPoolExecutor(max_workers=10) as pool:
+        futures = {pool.submit(_fetch_price, a): i for i, a in enumerate(assets)}
+        for future in as_completed(futures):
+            enriched[futures[future]] = future.result()
 
     total_value = sum(e["quantity"] * e["unitPrice"] for e in enriched)
 
@@ -647,6 +646,36 @@ async def etf_details(ticker: str):
         raise HTTPException(status_code=500, detail="Erreur lors du chargement des détails ETF")
 
 
+# ── Analytics ────────────────────────────────────────────────────────────────
+
+@app.get("/api/analyze/indicators/{ticker}", status_code=200)
+async def analyze_indicators(ticker: str, period: Optional[str] = "3mo"):
+    if not validate_ticker(ticker):
+        raise HTTPException(status_code=400, detail="Ticker invalide")
+    try:
+        result = get_indicators(ticker, period or "3mo")
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        print(f"[analyze:indicators] Erreur {ticker}: {e}")
+        raise HTTPException(status_code=503, detail="Données indisponibles pour ce ticker")
+
+
+@app.get("/api/analyze/risk/{ticker}", status_code=200)
+async def analyze_risk(ticker: str, period: Optional[str] = "1y"):
+    if not validate_ticker(ticker):
+        raise HTTPException(status_code=400, detail="Ticker invalide")
+    try:
+        result = get_risk_metrics(ticker, period or "1y")
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        print(f"[analyze:risk] Erreur {ticker}: {e}")
+        raise HTTPException(status_code=503, detail="Données indisponibles pour ce ticker")
+
+
 # ── Prediction ────────────────────────────────────────────────────────────────
 
 @app.get("/api/predict/stock", status_code=200)
@@ -706,19 +735,29 @@ async def predict_stock(
                 print(f"[predict] Fallback régression: {hf_err}")
 
         if not forecast:
-            # Régression linéaire numpy
-            x = np.arange(len(prices))
-            y = np.array(prices)
-            slope, intercept = np.polyfit(x, y, 1)
-            residuals = y - (slope * x + intercept)
-            std_dev = float(np.std(residuals))
-            n = len(prices)
-            forecast = [
-                round(float(slope * (n + i) + intercept) + np.random.uniform(-1, 1) * std_dev * 0.75, 2)
-                for i in range(30)
-            ]
+            # Essai statsmodels ETS (lissage exponentiel)
+            try:
+                from statsmodels.tsa.holtwinters import SimpleExpSmoothing  # noqa: PLC0415
+                ets_model = SimpleExpSmoothing(
+                    np.array(prices), initialization_method="estimated"
+                ).fit(optimized=True)
+                forecast = [round(float(v), 2) for v in ets_model.forecast(30)]
+                model_used = "ETS"
+            except Exception as ets_err:
+                print(f"[predict] Fallback numpy (ETS échoué: {ets_err})")
+                # Régression linéaire numpy
+                x = np.arange(len(prices))
+                y = np.array(prices)
+                slope, intercept = np.polyfit(x, y, 1)
+                residuals = y - (slope * x + intercept)
+                std_dev = float(np.std(residuals))
+                n = len(prices)
+                forecast = [
+                    round(float(slope * (n + i) + intercept) + np.random.uniform(-1, 1) * std_dev * 0.75, 2)
+                    for i in range(30)
+                ]
 
-        confidence = 0.6 if model_used != "linear-regression" else 0.75
+        confidence = 0.6 if model_used == "Qwen/Qwen2.5-72B-Instruct" else (0.70 if model_used == "ETS" else 0.55)
         return {
             "symbol": symbol,
             "prediction": {
