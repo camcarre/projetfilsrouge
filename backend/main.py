@@ -733,12 +733,14 @@ async def predict_stock(
                 if not resp.ok:
                     raise ValueError(f"HF Router Error {resp.status_code}")
                 generated = resp.json()["choices"][0]["message"]["content"]
-                numbers = [float(s) for s in re.split(r"[\s,]+", generated) if s and re.match(r"[\d.]+", s)]
-                if numbers:
-                    forecast = [round(n, 2) for n in numbers[:15]]
+                raw = re.findall(r"-?\d[\d,]*(?:\.\d+)?", generated)
+                numbers = [float(tok.replace(",", "")) for tok in raw]
+                plausible = [n for n in numbers if 0.2 * current_price <= n <= 5 * current_price]
+                if len(plausible) >= 5:
+                    forecast = [round(n, 2) for n in plausible[:15]]
                     model_used = "Qwen/Qwen2.5-72B-Instruct"
                 else:
-                    raise ValueError("Pas de nombres dans la réponse IA")
+                    raise ValueError("Prédiction IA hors plage plausible")
             except Exception as hf_err:
                 print(f"[predict] Fallback régression: {hf_err}")
 
