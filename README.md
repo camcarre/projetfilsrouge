@@ -6,43 +6,45 @@ Une Progressive Web App (PWA) pour visualiser vos finances personnelles, analyse
 
 ## Lancer le projet (front + back)
 
-Tout est prêt : le **backend** est dans **`../backend`**, le fichier **`.env`** est configuré pour l’appeler.
+Le repo contient :
+
+- **Frontend**: Preact + TypeScript + Vite (port **5173**)
+- **Backend**: **FastAPI** + SQLite (dossier `backend/`, port **3000**)
+
+Le front appelle l’API via **`VITE_API_URL`** (ex: `http://localhost:3000`).
 
 ### Première fois uniquement
 
-Installer les dépendances du **front** et du **back** :
+Installer les dépendances :
 
 ```bash
-cd "/Users/theodelporte/Cours et Projets/Projet Fil Rouge/Filrouge/projetfilsrouge"
 npm install
 
-cd "../backend"
-npm install
+python -m venv backend/.venv
+source backend/.venv/bin/activate
+pip install -r backend/requirements.txt
 ```
 
 ### Lancer en une commande
-
-Depuis le dossier **projetfilsrouge** :
+Depuis la racine :
 
 ```bash
-cd "/Users/theodelporte/Cours et Projets/Projet Fil Rouge/Filrouge/projetfilsrouge"
 npm run dev:all
 ```
 
-Ça démarre le **backend** (http://localhost:3000) et le **front** (http://localhost:5173). Ouvre **http://localhost:5173** dans le navigateur.  
-**Connexion** et **Portefeuille** sont reliés au backend (auth + actifs) : connecte-toi pour voir et ajouter tes actifs.
+Ça démarre le **backend** (http://localhost:3000) et le **front** (http://localhost:5173).  
+Ouvre http://localhost:5173.
 
 ### Lancer en deux terminaux (alternative)
 
 **Terminal 1 – Backend :**
 ```bash
-cd "/Users/theodelporte/Cours et Projets/Projet Fil Rouge/Filrouge/backend"
-npm run dev
+source backend/.venv/bin/activate
+uvicorn backend.main:app --reload --port 3000
 ```
 
 **Terminal 2 – Front :**
 ```bash
-cd "/Users/theodelporte/Cours et Projets/Projet Fil Rouge/Filrouge/projetfilsrouge"
 npm run dev
 ```
 
@@ -80,11 +82,11 @@ npm run dev
 - **Offline**: IndexedDB, Cache API
 - **État**: Redux
 
-### Backend – API custom (Express)
-- **Serveur**: Express (dossier `../backend`)
-- **Auth**: inscription / connexion email, token JWT-like
-- **API**: REST (auth + CRUD actifs)
-- **Données**: en mémoire (dev) ; à remplacer par une BDD pour la prod
+### Backend – API custom (FastAPI)
+- **Serveur**: FastAPI (dossier `backend/`)
+- **Auth**: inscription / connexion email, token Bearer (sessions SQLite)
+- **API**: REST (auth + assets + ETF + analytics)
+- **Données**: SQLite (`backend/data/finance.db`)
 
 ### Sources de données (à intégrer)
 - **APIs financières**: Yahoo Finance, Alpha Vantage
@@ -101,16 +103,18 @@ npm run dev
 ### 1. Installer les dépendances (front + back)
 
 ```bash
-cd projetfilsrouge
 npm install
 
-cd ../backend
-npm install
+python -m venv backend/.venv
+source backend/.venv/bin/activate
+pip install -r backend/requirements.txt
 ```
 
 ### 2. Configurer l’API
 
-Copier `.env.example` en `.env` dans `projetfilsrouge` (déjà fait si `VITE_API_URL=http://localhost:3000`).
+Créer un `.env` à la racine (voir variables attendues dans `.env.example`) avec au minimum :
+
+- `VITE_API_URL=http://localhost:3000`
 
 ### 3. Lancer le développement
 
@@ -163,32 +167,18 @@ projet-finance-pwa/
 │   ├── pages/            # Pages de l'application
 │   ├── hooks/            # Hooks personnalisés
 │   ├── utils/            # Utilitaires
-│   ├── services/         # API calls, Supabase
+│   ├── services/         # Appels API (client HTTP)
 │   ├── store/            # État global
 │   └── styles/           # Styles CSS
-├── supabase/             # Configuration Supabase
-│   ├── functions/        # Edge Functions
-│   ├── migrations/       # Migrations DB
-│   └── seed/             # Données de test
-├── tests/                # Tests unitaires
+├── backend/              # FastAPI + SQLite
 └── docs/                 # Documentation
 ```
 
 ## 🧪 Tests
 
-### Tests PWA (Lighthouse)
-```bash
-npm run test:lighthouse
-```
-
 ### Tests Unitaires
 ```bash
 npm run test
-```
-
-### Tests E2E
-```bash
-npm run test:e2e
 ```
 
 ## 🚀 Déploiement
@@ -198,10 +188,8 @@ npm run test:e2e
 2. Configurer variables d'environnement
 3. Déployer automatiquement sur push main
 
-### Backend (Supabase)
-1. Projet déjà créé
-2. Migrations automatiques via CI/CD
-3. Edge Functions déployés via CLI
+### Backend (FastAPI)
+Déploiement hors scope du workflow CI : la CI vérifie seulement lint/build + tests.
 
 ## 📊 Performance Objectifs
 
@@ -215,12 +203,11 @@ npm run test:e2e
 
 ```bash
 npm run dev          # Développement
+npm run dev:all      # Front (5173) + Back (3000)
 npm run build        # Build production
 npm run preview      # Preview production
 npm run test         # Tests unitaires
-npm run test:lighthouse # Audit PWA
 npm run lint         # Linting
-npm run format       # Formatage
 ```
 
 ## 📚 Documentation

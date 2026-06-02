@@ -28,7 +28,7 @@ Sans eux, le projet ne build pas ou ne tourne pas correctement.
 | **Racine** | README.md | Présentation du projet, commandes, stack. |
 | **docs/** | cahier_des_charges_app_finance.md | CDC du projet (référence). |
 | **docs/** | repartition_taches.md | Répartition Cam / Théo. |
-| **docs/** | BACKEND.md | Explication backend (API custom Express, pas Supabase). |
+| **docs/** | BACKEND.md | Explication backend (API custom FastAPI, pas Supabase). |
 | **docs/** | API_BACKEND_CUSTOM.md | Contrat API du backend utilisé (auth + actifs). |
 | **docs/** | STRUCTURE.md | Arborescence du projet. |
 | **docs/** | FICHIERS_RACINE.md | Ce fichier – rôle des fichiers à la racine. |
@@ -41,6 +41,7 @@ Sans eux, le projet ne build pas ou ne tourne pas correctement.
 - **\*.tsbuildinfo** : cache TypeScript (déjà dans .gitignore).
 - **dist/** : build de production (déjà dans .gitignore).
 - **node_modules/** : dépendances (déjà dans .gitignore).
+- **.vite/** : cache Vite (déjà dans .gitignore).
 
 ---
 

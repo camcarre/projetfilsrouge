@@ -1,6 +1,6 @@
 # Contrat API – Backend du projet (API custom)
 
-**Le backend du projet est cette API custom** (serveur Express dans `../backend`). Pas Supabase.  
+**Le backend du projet est cette API custom** (**FastAPI** dans `backend/`). Pas Supabase.  
 Le front appelle cette API dès que `VITE_API_URL` est défini (ex. `http://localhost:3000`). Le serveur doit exposer les endpoints ci‑dessous (REST, JSON).
 
 ---

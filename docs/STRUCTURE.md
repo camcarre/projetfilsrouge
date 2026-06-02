@@ -1,6 +1,6 @@
 # Structure du projet (CDC)
 
-Structure frontend PWA – Preact + TypeScript (TSX), Redux, Tailwind, Vite. Backend : API custom (Express) dans `../backend`.
+Structure frontend PWA – Preact + TypeScript (TSX), Redux, Tailwind, Vite. Backend : API custom (**FastAPI**) dans `backend/`.
 
 ```
 projetfilsrouge/

@@ -1,7 +1,6 @@
 # Backend — Finance PWA (Python/FastAPI)
 
-Migration du backend Node/Express vers Python FastAPI.  
-Le fichier `server.js` est conservé pour rollback.
+Backend Python FastAPI + SQLite.
 
 ## Démarrage Python
 
@@ -17,15 +16,7 @@ uvicorn main:app --reload --port 3000
 python main.py
 ```
 
-## Démarrage Node (rollback)
-
-```bash
-cd backend
-npm install
-npm run dev
-```
-
-## Routes disponibles (plan 04-01)
+## Routes principales
 
 | Méthode | Route | Auth | Description |
 |---------|-------|------|-------------|
@@ -33,20 +24,24 @@ npm run dev
 | POST | `/auth/login` | Non | Connexion |
 | GET | `/auth/me` | Bearer | Session courante |
 | POST | `/auth/logout` | Bearer | Déconnexion |
-
-Routes à venir (plans 04-02 / 04-03) :
-- `/api/assets` — CRUD actifs + prix Yahoo Finance
-- `/api/etfs` — ETF Yahoo Finance
-- `/api/predict/stock` — Prédiction Qwen/Qwen2.5-72B-Instruct
-- `/api/quiz/generate` — Quiz IA
+| GET | `/health` | Non | Healthcheck |
+| GET | `/api/assets` | Bearer | Liste actifs |
+| POST | `/api/assets` | Bearer | Créer actif |
+| PUT | `/api/assets/:id` | Bearer | Modifier actif |
+| DELETE | `/api/assets/:id` | Bearer | Supprimer actif |
+| GET | `/api/transactions` | Bearer | Liste transactions |
+| POST | `/api/transactions` | Bearer | Créer transaction |
+| GET | `/api/etfs` | Non | Liste ETF |
+| POST | `/api/etfs/compare` | Non | Comparer ETF |
+| GET | `/api/predict/stock?symbol=...` | Non | Prédiction (HF optionnel) |
+| GET | `/api/quiz/generate` | Bearer | Quiz (HF optionnel) |
 
 ## Variables d'environnement
 
 Fichier `.env` à la racine du projet :
 ```
-HF_API_TOKEN=hf_...
-PORT=3000
 VITE_API_URL=http://localhost:3000
+HF_API_TOKEN=
 ```
 
 ## DB

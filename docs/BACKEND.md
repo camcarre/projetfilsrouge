@@ -1,18 +1,18 @@
-# Backend – API custom (Express)
+# Backend – API custom (FastAPI)
 
-**Le projet utilise le backend custom** (serveur Express dans **`../backend`**), **pas Supabase**.  
+**Le projet utilise le backend custom** (**FastAPI** dans **`backend/`**), **pas Supabase**.  
 Auth et portefeuille (actifs) passent par cette API. Voir le contrat dans **API_BACKEND_CUSTOM.md**.
 
 ---
 
 ## 1. Ce qui est en place
 
-### 1.1 Backend (dossier `Filrouge/backend/`)
+### 1.1 Backend (dossier `backend/`)
 
-- **Express** + CORS, JSON
+- **FastAPI** + CORS, JSON
 - **Auth** : `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `POST /auth/logout`
 - **Actifs** : `GET /api/assets`, `POST /api/assets`, `PUT /api/assets/:id`, `DELETE /api/assets/:id`
-- Données en mémoire (dev/démo) ; à remplacer par une base (SQLite, PostgreSQL, etc.) pour la prod
+- **SQLite** (dev/démo) : `backend/data/finance.db`
 
 ### 1.2 Front
 
@@ -43,9 +43,23 @@ Pour toute nouvelle fonctionnalité (ETF, prédictions, analytics), l’impléme
 
 ---
 
-## 3. Bonnes pratiques
+## 3. Installer / lancer
 
-- **`.env`** : ne commiter que `.env.example` ; mettre `VITE_API_URL` dans `.env` en local.
+- Créer un venv et installer les deps :
+
+```bash
+python -m venv backend/.venv
+source backend/.venv/bin/activate
+pip install -r backend/requirements.txt
+```
+
+- Lancer avec le front :
+
+```bash
+npm run dev:all
+```
+
+- **`.env`** (racine) : ne commiter que `.env.example` ; mettre `VITE_API_URL` dans `.env` en local.
 - **Token** : stocké en localStorage après login/register ; envoyé en `Authorization: Bearer <token>` ; supprimé côté client en cas de 401.
 - **Couche services** : l’app utilise `authService`, `portfolioService`, etc., pas le client HTTP directement.
 

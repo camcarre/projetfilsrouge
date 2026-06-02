@@ -49,6 +49,11 @@ app.add_middleware(
 )
 
 
+@app.get("/health", status_code=200)
+async def health():
+    return {"status": "ok"}
+
+
 # ── Middleware log ────────────────────────────────────────────────────────────
 @app.middleware("http")
 async def log_requests(request: Request, call_next):

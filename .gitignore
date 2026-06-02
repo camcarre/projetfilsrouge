@@ -49,6 +49,7 @@ coverage/
 # Generated vite/ts artifacts
 vite.config.js
 vite.config.d.ts
+.vite/
 
 # Python
 __pycache__/
