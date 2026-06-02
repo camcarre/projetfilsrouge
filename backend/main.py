@@ -806,9 +806,9 @@ async def predict_stock(
         if not forecast:
             # Essai statsmodels ETS (lissage exponentiel)
             try:
-                from statsmodels.tsa.holtwinters import SimpleExpSmoothing  # noqa: PLC0415
-                ets_model = SimpleExpSmoothing(
-                    np.array(prices), initialization_method="estimated"
+                from statsmodels.tsa.holtwinters import ExponentialSmoothing  # noqa: PLC0415
+                ets_model = ExponentialSmoothing(
+                    np.array(prices, dtype=float), trend='add', initialization_method="estimated"
                 ).fit(optimized=True)
                 forecast = [round(float(v), 2) for v in ets_model.forecast(30)]
                 model_used = "ETS"
