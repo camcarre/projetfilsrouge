@@ -49,3 +49,13 @@ Implémentation complète de la page Analysis (indicateurs techniques + prédict
 Status: Complete
 Completed: 2026-06-02
 Plans: 2/2
+
+---
+
+## Milestone v0.3 — Qualité & Tests
+
+### Phase 06 — E2E Tests Playwright (Planning)
+Suite de tests end-to-end couvrant les flux critiques :
+- Plan 01 : Installation Playwright, config, 4 spec files (auth, dashboard, analysis, portfolio)
+Status: Planning
+Depends on: Phase 05 ✅
