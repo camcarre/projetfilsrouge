@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'preact/hooks'
 import { useSelector } from 'react-redux'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Spinner } from '@/components/ui/Spinner'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { Alert } from '@/components/ui/Alert'
 
 import { fetchEtfs, type EtfRow } from '@/services/etfService'
@@ -117,6 +117,15 @@ export function EtfPage() {
     a.download = `etf-recommandations-${new Date().toISOString().slice(0, 10)}.csv`
     a.click()
     URL.revokeObjectURL(a.href)
+  }
+
+  const resetFilters = () => {
+    setSector('Tous')
+    setZone('Toutes')
+    setEsg('Tous')
+    setTerMax('Tous')
+    setDistribution('Tous')
+    setSearchQuery('')
   }
 
   const toggleCompare = (etf: EtfRow) => {
@@ -332,11 +341,24 @@ export function EtfPage() {
         )}
         <ul className="space-y-2">
           {loading ? (
-            <li className="py-6 flex justify-center">
-              <Spinner size="md" />
-            </li>
+            Array.from({ length: 4 }).map((_, i) => (
+              <li key={i} className="flex items-center justify-between gap-3 py-3 px-4 -mx-4 rounded-xl border border-neutral-100 dark:border-neutral-800">
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-2/5" />
+                  <Skeleton className="h-3 w-3/5" />
+                </div>
+                <Skeleton className="h-6 w-12" />
+              </li>
+            ))
           ) : filteredEtfs.length === 0 ? (
-            <li className="py-6 text-center text-[13px] text-neutral-500 dark:text-neutral-400">Aucun ETF ne correspond aux filtres.</li>
+            <li className="py-8 flex flex-col items-center gap-3 text-center">
+              <p className="text-[13px] text-neutral-500 dark:text-neutral-400">
+                Aucun ETF ne correspond à ces filtres.
+              </p>
+              <Button variant="secondary" onClick={resetFilters}>
+                Réinitialiser les filtres
+              </Button>
+            </li>
           ) : (
           filteredEtfs.map((etf) => (
             <li

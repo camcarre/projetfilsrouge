@@ -142,6 +142,20 @@ export function DashboardPage() {
         Vue d&apos;ensemble et accès rapide aux outils.
       </p>
 
+      {apiConfigured && !user && (
+        <Card className="mb-5 text-center py-6">
+          <p className="text-[14px] font-medium text-neutral-800 dark:text-neutral-100 mb-1">
+            Bienvenue sur Finance PWA
+          </p>
+          <p className="text-[13px] text-neutral-500 dark:text-neutral-400 mb-4">
+            Connectez-vous pour suivre votre portefeuille et recevoir des recommandations ETF.
+          </p>
+          <Link to="/auth">
+            <Button variant="primary">Se connecter</Button>
+          </Link>
+        </Card>
+      )}
+
       {/* Filtre période KPI */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <span className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Période</span>
