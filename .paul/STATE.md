@@ -15,20 +15,21 @@ Progress:
 - Phase 05-03 (Profil): [██████████] 100% ✓
 - Phase 06-01 (Playwright): [██████████] 100% ✓
 - Phase 06-02 (CI/CD): [██████████] 100% ✓
+- Phase 07-02 (Skeleton/UX): [██████████] 100% ✓
 
 ## Loop Position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [06-02 loop fermé — CI/CD COMPLETE]
+  ✓        ✓        ✓     [07-02 loop fermé — Skeleton/UX COMPLETE]
 ```
 
 ## Session Continuity
 
 Last session: 2026-06-02
 Stopped at: Plans 06-02 + 07-01 créés
-Next action: /paul:apply .paul/phases/07-sprint1-features/07-02-PLAN.md
-Resume file: .paul/phases/07-sprint1-features/07-02-PLAN.md
+Next action: human-verify phase 07-02, puis phase 08 (Comparateur ETF + VaR UI)
+Resume file: .paul/phases/07-sprint1-features/07-02-SUMMARY.md
 
 ## Plans créés (prêts à exécuter)
 
