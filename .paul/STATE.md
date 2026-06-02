@@ -3,29 +3,29 @@
 ## Current Position
 
 Milestone: Advanced Analytics (v0.2)
-Phase: 05 — Advanced Analytics — Planning
-Plan: 05-01 APPLY complete
-Status: APPLY complet, prêt pour UNIFY
-Last activity: 2026-04-02 — 05-01 appliqué (analytics_service + endpoints + ETS)
+Phase: 05 — Advanced Analytics — COMPLETE
+Plan: 05-02 UNIFY complete
+Status: Phase 05 fermée — tous plans complets
+Last activity: 2026-06-02 — 05-02 UNIFY (frontend analytics : RSI, MACD, Bollinger, VaR, Sharpe, filtrage période)
 
 Progress:
 - Migration Backend: [██████████] 100% ✓
 - Phase 04: [██████████] 100% (3/3 plans complets)
-- Phase 05: [█████░░░░░] 50% (05-01 ✓ loop fermé, 05-02 à appliquer)
+- Phase 05: [██████████] 100% ✓ (2/2 plans complets — loop fermé)
 
 ## Loop Position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [05-01 loop fermé]
+  ✓        ✓        ✓     [05-02 loop fermé — Phase 05 COMPLETE]
 ```
 
 ## Session Continuity
 
-Last session: 2026-04-02
-Stopped at: 05-01 UNIFY complet — 05-02 frontend prêt à appliquer
-Next action: /paul:apply .paul/phases/05-advanced-analytics/05-02-PLAN.md
-Resume file: .paul/phases/05-advanced-analytics/05-02-PLAN.md
+Last session: 2026-06-02
+Stopped at: 05-02 UNIFY complet — Phase 05 Advanced Analytics terminée
+Next action: /paul:plan (Phase suivante — choisir parmi phases en attente)
+Resume file: .paul/phases/05-advanced-analytics/05-02-SUMMARY.md
 
 ## En attente (phases restantes)
 
