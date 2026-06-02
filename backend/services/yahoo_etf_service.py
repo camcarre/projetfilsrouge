@@ -45,7 +45,7 @@ def validate_ticker(ticker: str) -> bool:
     """Valide un ticker boursier (ex: AAPL, CW8.PA)."""
     if not ticker or not isinstance(ticker, str):
         return False
-    return bool(re.match(r"^[A-Z0-9]{1,10}(\.[A-Z]{2})?$", ticker))
+    return bool(re.fullmatch(r"[A-Z0-9]{1,10}(-[A-Z]{2,4})?(\.[A-Z]{2,4})?(=X)?", ticker))
 
 
 def _calc_match(ter: float, esg: str) -> int:
