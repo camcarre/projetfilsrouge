@@ -3,35 +3,38 @@
 ## Current Position
 
 Milestone: Advanced Analytics (v0.2)
-Phase: 05 — Advanced Analytics — COMPLETE
-Plan: 05-02 UNIFY complete
-Status: Phase 05 fermée — tous plans complets
-Last activity: 2026-06-02 — 05-02 UNIFY (frontend analytics : RSI, MACD, Bollinger, VaR, Sharpe, filtrage période)
+Phase: 06 — E2E Tests (Playwright)
+Plan: 06-01 APPLY complete → UNIFY next
+Status: Phase 06 EN COURS — Tasks 1-4 exécutés, checkpoint:human-verify en attente
+Last activity: 2026-06-02 — 06-01 APPLY (Playwright MCP vérification: 7/7 tests PASS)
 
 Progress:
 - Migration Backend: [██████████] 100% ✓
 - Phase 04: [██████████] 100% (3/3 plans complets)
-- Phase 05: [██████████] 100% ✓ (2/2 plans complets — loop fermé)
+- Phase 05: [██████████] 100% ✓ (2/2 plans complets)
+- Phase 06: [███████░░░] 60% (06-01 APPLY PASS, UNIFY reste)
 
 ## Loop Position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [05-02 loop fermé — Phase 05 COMPLETE]
+  ✓        ✓        ✓     [06-01 loop fermé — Phase 06-01 COMPLETE]
 ```
 
 ## Session Continuity
 
 Last session: 2026-06-02
-Stopped at: 05-02 UNIFY complet — Phase 05 Advanced Analytics terminée
-Next action: /paul:plan (Phase suivante — choisir parmi phases en attente)
-Resume file: .paul/phases/05-advanced-analytics/05-02-SUMMARY.md
+Stopped at: 06-01 UNIFY complet — Phase 06 E2E Tests loop closed
+Next action: /paul:plan (Phase 06-02 ou phase suivante)
+Resume file: .paul/phases/06-e2e-tests/06-01-SUMMARY.md
 
 ## En attente (phases restantes)
 
 - Phase 01 — Quick Wins UI : nav active, heading scale, dark mode labels, tabular-nums
 - Phase 02 — Composants Feedback : Skeleton, Toast, EmptyState, page transition
 - Phase 03 — UX Flows : onboarding, sticky filters ETF, cross-links, pull-to-refresh
+- Phase 06-02 — CI/CD : GitHub Actions workflow pour E2E tests
+- Phase 06-03 — Performance : Lighthouse testing
 
 ## Decisions
 
