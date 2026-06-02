@@ -117,6 +117,15 @@ class CompareBody(BaseModel):
     tickers: List[str]
 
 
+class InvestorProfileBody(BaseModel):
+    risk_tolerance: int
+    investment_horizon: str
+    investment_goal: str
+    monthly_investment: float = 0
+    esg_preference: bool = False
+    knowledge_level: str = "beginner"
+
+
 # ── Auth routes ───────────────────────────────────────────────────────────────
 
 @app.post("/auth/register", status_code=200)
@@ -635,6 +644,56 @@ async def etf_history(ticker: str, period: Optional[str] = "3mo"):
         raise HTTPException(status_code=500, detail="Erreur lors du chargement des données historiques")
 
 
+@app.get("/api/etfs/recommended", status_code=200)
+async def get_recommended_etfs(
+    zone: Optional[str] = None,
+    sector: Optional[str] = None,
+    esg: Optional[str] = None,
+    terMax: Optional[str] = None,
+    authorization: Optional[str] = Header(default=None),
+):
+    user_id = get_user_id(authorization)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Non authentifié")
+    db = get_db()
+    profile_row = db.execute(
+        "SELECT * FROM investor_profiles WHERE user_id = ?", (user_id,)
+    ).fetchone()
+    if not profile_row:
+        raise HTTPException(status_code=404, detail={"error": "profile_required"})
+    profile = dict(profile_row)
+
+    filters = {}
+    if zone:
+        filters["zone"] = zone
+    if sector:
+        filters["sector"] = sector
+    if esg:
+        filters["esg"] = esg
+    if terMax:
+        filters["terMax"] = terMax
+
+    etf_list = get_etfs(filters)
+
+    scored = []
+    for etf in etf_list:
+        etf_dict = {**etf}
+        etf_dict["match_score"] = _compute_match_score(etf_dict, profile)
+        scored.append(etf_dict)
+
+    scored.sort(key=lambda e: e["match_score"], reverse=True)
+
+    return {
+        "etfs": scored,
+        "profile_used": {
+            "risk_tolerance": profile["risk_tolerance"],
+            "investment_horizon": profile["investment_horizon"],
+            "investment_goal": profile["investment_goal"],
+            "esg_preference": bool(profile["esg_preference"]),
+        },
+    }
+
+
 @app.get("/api/etfs/{ticker}", status_code=200)
 async def etf_details(ticker: str):
     if not validate_ticker(ticker):
@@ -784,6 +843,125 @@ async def predict_stock(
     except Exception as e:
         print(f"[predict] Erreur: {e}")
         raise HTTPException(status_code=500, detail="Erreur lors de la prédiction")
+
+
+# ── Profil investisseur ───────────────────────────────────────────────────────
+
+VALID_HORIZONS = {"short", "medium", "long"}
+VALID_GOALS = {"growth", "income", "preservation"}
+VALID_LEVELS = {"beginner", "intermediate", "advanced"}
+
+
+@app.get("/api/profile", status_code=200)
+async def get_profile(authorization: Optional[str] = Header(default=None)):
+    user_id = get_user_id(authorization)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Non authentifié")
+    db = get_db()
+    row = db.execute(
+        "SELECT * FROM investor_profiles WHERE user_id = ?", (user_id,)
+    ).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail={"error": "profile_not_found"})
+    return dict(row)
+
+
+@app.post("/api/profile", status_code=200)
+async def save_profile(body: InvestorProfileBody, authorization: Optional[str] = Header(default=None)):
+    user_id = get_user_id(authorization)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Non authentifié")
+    if body.risk_tolerance not in range(1, 6):
+        raise HTTPException(status_code=400, detail="risk_tolerance doit être entre 1 et 5")
+    if body.investment_horizon not in VALID_HORIZONS:
+        raise HTTPException(status_code=400, detail=f"investment_horizon invalide: {VALID_HORIZONS}")
+    if body.investment_goal not in VALID_GOALS:
+        raise HTTPException(status_code=400, detail=f"investment_goal invalide: {VALID_GOALS}")
+    if body.knowledge_level not in VALID_LEVELS:
+        raise HTTPException(status_code=400, detail=f"knowledge_level invalide: {VALID_LEVELS}")
+    db = get_db()
+    db.execute(
+        """
+        INSERT INTO investor_profiles
+            (user_id, risk_tolerance, investment_horizon, investment_goal, monthly_investment, esg_preference, knowledge_level, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(user_id) DO UPDATE SET
+            risk_tolerance = excluded.risk_tolerance,
+            investment_horizon = excluded.investment_horizon,
+            investment_goal = excluded.investment_goal,
+            monthly_investment = excluded.monthly_investment,
+            esg_preference = excluded.esg_preference,
+            knowledge_level = excluded.knowledge_level,
+            updated_at = CURRENT_TIMESTAMP
+        """,
+        (user_id, body.risk_tolerance, body.investment_horizon, body.investment_goal,
+         body.monthly_investment, int(body.esg_preference), body.knowledge_level),
+    )
+    db.commit()
+    return {
+        "user_id": user_id,
+        "risk_tolerance": body.risk_tolerance,
+        "investment_horizon": body.investment_horizon,
+        "investment_goal": body.investment_goal,
+        "monthly_investment": body.monthly_investment,
+        "esg_preference": int(body.esg_preference),
+        "knowledge_level": body.knowledge_level,
+    }
+
+
+_ESG_SCORES = {"AAA": 20, "AA": 16, "A": 12, "B": 6}
+
+
+def _compute_match_score(etf: dict, profile: dict) -> float:
+    score = 0.0
+
+    # Score risque (30 pts) — risque 1-5 : 1=très prudent, 5=très dynamique
+    # ETF avec perf1y élevée et positive = plus risqué → convient aux profils dynamiques
+    risk = profile["risk_tolerance"]
+    perf = etf.get("perf1y", 0) or 0
+    if risk >= 4:
+        score += 30 if perf >= 10 else (20 if perf >= 0 else 10)
+    elif risk == 3:
+        score += 30 if 0 <= perf <= 15 else 15
+    else:
+        score += 30 if perf < 10 else (15 if perf >= 0 else 25)
+
+    # Score horizon (25 pts)
+    horizon = profile["investment_horizon"]
+    ter = etf.get("ter", 0.5) or 0.5
+    if horizon == "long":
+        score += 25 if perf >= 8 else (15 if perf >= 0 else 5)
+    elif horizon == "medium":
+        score += 25 if 4 <= perf <= 15 else 12
+    else:
+        score += 25 if ter <= 0.2 else (15 if ter <= 0.3 else 5)
+
+    # Score ESG (20 pts)
+    esg_pref = bool(profile.get("esg_preference", 0))
+    etf_esg = etf.get("esg", "B") or "B"
+    if esg_pref:
+        score += _ESG_SCORES.get(etf_esg, 6)
+    else:
+        score += 20
+
+    # Score TER (15 pts)
+    if ter <= 0.15:
+        score += 15
+    elif ter <= 0.25:
+        score += 10
+    elif ter <= 0.35:
+        score += 5
+
+    # Score objectif (10 pts)
+    goal = profile["investment_goal"]
+    if goal == "growth":
+        score += 10 if perf >= 10 else (5 if perf >= 0 else 0)
+    elif goal == "income":
+        score += _ESG_SCORES.get(etf_esg, 6) // 2
+    else:
+        score += 10 if ter <= 0.2 else (5 if ter <= 0.3 else 0)
+
+    return round(min(score, 100.0), 1)
 
 
 # ── Quiz ──────────────────────────────────────────────────────────────────────
