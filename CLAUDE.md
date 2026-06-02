@@ -62,3 +62,4 @@ projetfilsrouge/
 1. Modifier `backend/server.js`
 2. Documenter dans `docs/`
 3. Mettre à jour le service correspondant dans `src/services/`
+
