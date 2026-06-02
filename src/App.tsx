@@ -19,6 +19,7 @@ const EducationPage = lazy(() => import('@/pages/Education/EducationPage').then(
 const SettingsPage = lazy(() => import('@/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })))
 const ProfileQuestionnairePage = lazy(() => import('@/pages/Profile/ProfileQuestionnairePage').then((m) => ({ default: m.ProfileQuestionnairePage })))
+const ProfileEditPage = lazy(() => import('@/pages/Profile/ProfileEditPage').then((m) => ({ default: m.ProfileEditPage })))
 
 function App() {
   const dispatch = useDispatch()
@@ -45,6 +46,7 @@ function App() {
             <Route path="/education/*" element={<EducationPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/profile/questionnaire" element={<ProfileQuestionnairePage />} />
+            <Route path="/profile/edit" element={<ProfileEditPage />} />
             <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </PageTransition>
