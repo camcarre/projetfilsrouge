@@ -1,12 +1,15 @@
 import { useState, useEffect, useMemo } from 'preact/hooks'
+import { useSelector } from 'react-redux'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { Alert } from '@/components/ui/Alert'
 
 import { fetchEtfs, type EtfRow } from '@/services/etfService'
+import { fetchRecommendedEtfs } from '@/services/profileService'
 import { fetchEtfHistory, formatHistoryForChart } from '@/services/etfHistoryService'
 import { CombinedChart } from '@/components/ui/CombinedChart'
+import type { RootState } from '@/store'
 
 const SECTORS = ['Tous', 'Large cap', 'ESG', 'Emerging', 'Sectoriel', 'Diversifié']
 const ZONES = ['Toutes', 'Monde', 'Europe', 'USA', 'Émergents', 'Japon', 'Asie Pacifique']
@@ -15,6 +18,9 @@ const DISTRIBUTION = ['Tous', 'Capitalisant', 'Distribuant']
 const TER_MAX = ['Tous', '≤ 0,10 %', '≤ 0,20 %', '≤ 0,30 %', '≤ 0,50 %']
 
 export function EtfPage() {
+  const profile = useSelector((state: RootState) => state.profile.profile)
+  const hasProfile = profile !== null
+
   const [sector, setSector] = useState('Tous')
   const [zone, setZone] = useState('Toutes')
   const [esg, setEsg] = useState('Tous')
@@ -32,30 +38,29 @@ export function EtfPage() {
   const [selectedChartData, setSelectedChartData] = useState<{date: string, value: number}[]>([])
 
   useEffect(() => {
+    const data = []
+    for (let i = 90; i >= 0; i--) {
+      const date = new Date()
+      date.setDate(date.getDate() - i)
+      const value = 100 + Math.sin(i / 10) * 10 + Math.random() * 5
+      data.push({ date: date.toISOString().split('T')[0], value: parseFloat(value.toFixed(2)) })
+    }
+    setMainChartData(data)
+  }, [])
+
+  useEffect(() => {
     setLoading(true)
     setError(null)
-    fetchEtfs({ zone, sector, esg, terMax }).then(({ etfs: list, error: err }) => {
-      setEtfs(list)
+    const loadEtfs = hasProfile
+      ? fetchRecommendedEtfs({ zone, sector, esg, terMax })
+      : fetchEtfs({ zone, sector, esg, terMax })
+
+    loadEtfs.then(({ etfs: list, error: err }) => {
+      setEtfs(list as EtfRow[])
       setError(err?.message ?? null)
       setLoading(false)
     })
-
-    // Données de démonstration pour le graphique principal
-    const generateMainChartData = () => {
-      const data = []
-      for (let i = 90; i >= 0; i--) {
-        const date = new Date()
-        date.setDate(date.getDate() - i)
-        const value = 100 + Math.sin(i / 10) * 10 + Math.random() * 5
-        data.push({
-          date: date.toISOString().split('T')[0],
-          value: parseFloat(value.toFixed(2))
-        })
-      }
-      return data
-    }
-    setMainChartData(generateMainChartData())
-  }, [sector, zone, esg, terMax])
+  }, [sector, zone, esg, terMax, hasProfile])
 
   const filteredEtfs = useMemo(() => {
     if (!searchQuery) return etfs
