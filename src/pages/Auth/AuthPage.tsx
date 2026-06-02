@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { Alert } from '@/components/ui/Alert'
 import { setUser } from '@/store/slices/authSlice'
+import { setProfile } from '@/store/slices/profileSlice'
 import { signInWithEmail, signUpWithEmail } from '@/services/authService'
 import { isCustomApiConfigured } from '@/services/api/client'
+import { fetchProfile } from '@/services/profileService'
 
 export function AuthPage() {
   const dispatch = useDispatch()
@@ -37,7 +39,13 @@ export function AuthPage() {
       }
       if (result.user) {
         dispatch(setUser(result.user))
-        navigate('/', { replace: true })
+        const profile = await fetchProfile()
+        if (profile) {
+          dispatch(setProfile(profile))
+          navigate('/', { replace: true })
+        } else {
+          navigate('/profile/questionnaire', { replace: true })
+        }
       }
     } finally {
       setLoading(false)

@@ -18,6 +18,7 @@ const EtfPage = lazy(() => import('@/pages/Etf/EtfPage').then((m) => ({ default:
 const EducationPage = lazy(() => import('@/pages/Education/EducationPage').then((m) => ({ default: m.EducationPage })))
 const SettingsPage = lazy(() => import('@/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })))
+const ProfileQuestionnairePage = lazy(() => import('@/pages/Profile/ProfileQuestionnairePage').then((m) => ({ default: m.ProfileQuestionnairePage })))
 
 function App() {
   const dispatch = useDispatch()
@@ -43,6 +44,7 @@ function App() {
             <Route path="/etf" element={<EtfPage />} />
             <Route path="/education/*" element={<EducationPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/profile/questionnaire" element={<ProfileQuestionnairePage />} />
             <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </PageTransition>
