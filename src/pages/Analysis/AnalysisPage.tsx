@@ -190,8 +190,11 @@ export function AnalysisPage() {
     : predictionSeries
   const hasCombinedChart = filteredHistorical.length >= 2 && filteredPrediction.length >= 2
   const lastVal = parsed?.value ?? (predictionSeries.length > 0 ? predictionSeries[predictionSeries.length - 1] : 0)
-  const firstVal = historical.length > 0 ? historical[0] : lastVal
-  const variationPct = firstVal ? ((lastVal - firstVal) / firstVal) * 100 : 0
+  // Variation PRÉVUE = prix prédit vs prix actuel (dernier point historique), pas depuis le début de l'historique.
+  const currentVal = historical.length > 0 ? historical[historical.length - 1] : lastVal
+  const variationPct = currentVal ? ((lastVal - currentVal) / currentVal) * 100 : 0
+  const currencyFor = (sym: string): string =>
+    /\.(PA|AS|DE|MI|BR|LS)$/i.test(sym) ? 'EUR' : /\.L$/i.test(sym) ? 'GBP' : 'USD'
 
   // Indicateurs — dernières valeurs non-null
   const lastRsi = indicators ? [...indicators.rsi].reverse().find((v) => v !== null) ?? null : null
@@ -289,14 +292,14 @@ export function AnalysisPage() {
                     variationPct >= 0 ? 'border-l-emerald-500 dark:border-l-emerald-400' : 'border-l-red-500 dark:border-l-red-400'
                   }`}
                 >
-                  <p className="text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">Variation (période)</p>
+                  <p className="text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">Variation prévue</p>
                   <p className={`text-base font-semibold tabular-nums ${variationPct >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                     {variationPct >= 0 ? '+' : ''}{variationPct.toFixed(2)}%
                   </p>
                 </div>
                 <div className="analysis-metric-card rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800/30 border-l-4 border-l-slate-400 dark:border-l-slate-500 pl-4 pr-3 py-3 transition-all duration-300 ease-out hover:shadow-md hover:border-neutral-300 dark:hover:border-neutral-600 hover:-translate-y-px">
                   <p className="text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">Valeur prédite</p>
-                  <p className="text-base font-semibold tabular-nums text-neutral-800 dark:text-neutral-100">{(chartHoverValue ?? parsed.value).toFixed(2)} USD</p>
+                  <p className="text-base font-semibold tabular-nums text-neutral-800 dark:text-neutral-100">{(chartHoverValue ?? parsed.value).toFixed(2)} {currencyFor(display.symbol)}</p>
                 </div>
               </div>
             )}
@@ -581,7 +584,7 @@ export function AnalysisPage() {
               {[...predictionHistory].reverse().map((entry, i) => (
                 <li key={`${entry.symbol}-${entry.date}-${i}`} className="flex flex-wrap items-center justify-between gap-2 py-2 px-3 -mx-3 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800/40 text-[13px]">
                   <span className="font-medium text-neutral-800 dark:text-neutral-100">{entry.symbol}</span>
-                  <span className="tabular-nums text-neutral-600 dark:text-neutral-400">{entry.value.toFixed(2)} USD</span>
+                  <span className="tabular-nums text-neutral-600 dark:text-neutral-400">{entry.value.toFixed(2)} {currencyFor(entry.symbol)}</span>
                   <span className="text-[11px] text-neutral-500 dark:text-neutral-500">{new Date(entry.date).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}</span>
                   <Button variant="outline" className="flex-shrink-0" onClick={() => { setSymbol(entry.symbol); handlePredict(entry.symbol) }}>Réexécuter</Button>
                 </li>
