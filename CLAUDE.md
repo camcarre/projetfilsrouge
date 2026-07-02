@@ -1,5 +1,5 @@
 # finance-pwa
-PWA de visualisation financière et recommandations ETF — Preact + TypeScript + Vite + Tailwind + Redux + Supabase + Express
+PWA de visualisation financière et recommandations ETF — Preact + TypeScript + Vite + Tailwind + Redux + Supabase + FastAPI (Python)
 
 ## Commandes
 ```
@@ -22,7 +22,7 @@ projetfilsrouge/
 │   ├── types/         # Types TypeScript
 │   └── utils/         # Utilitaires
 ├── backend/
-│   ├── server.js      # Express — auth JWT + CRUD actifs
+│   ├── main.py        # FastAPI (Python) — auth JWT + CRUD actifs
 │   ├── services/      # Services backend
 │   └── data/          # Données en mémoire (dev)
 ├── public/            # Manifest PWA, SW, icônes
@@ -34,7 +34,7 @@ projetfilsrouge/
 - **État** : Redux Toolkit + react-redux
 - **Routing** : react-router-dom v6
 - **Charts** : Recharts
-- **Backend** : Express.js, auth token Bearer
+- **Backend** : FastAPI (Python), auth token Bearer
 - **BDD** : Supabase (prod) / en mémoire (dev)
 - **PWA** : vite-plugin-pwa, Service Worker
 
@@ -46,7 +46,7 @@ projetfilsrouge/
 - Nommage : PascalCase composants, camelCase utils/hooks
 
 ## Gotchas
-- `backend/` est un projet Node séparé avec son propre `package.json` — `npm install` à faire dans les deux
+- `backend/` est un projet Python séparé avec son propre `requirements.txt` — `pip install -r requirements.txt` à faire à la racine du backend
 - `.env` à la racine du front (non commité) — voir `.env.example`
 - Preact ≠ React : éviter les libs React-only sans vérifier la compat Preact
 - Backend en mémoire en dev → les données sont perdues au restart
@@ -59,6 +59,6 @@ projetfilsrouge/
 3. Importer depuis la page concernée
 
 ### Ajouter un endpoint backend
-1. Modifier `backend/server.js`
+1. Modifier `backend/main.py`
 2. Documenter dans `docs/`
 3. Mettre à jour le service correspondant dans `src/services/`

@@ -6,6 +6,7 @@ Plans suivants : assets, ETF, prediction, quiz
 import os
 import re
 import secrets
+import logging
 import bcrypt
 import uvicorn
 import numpy as np
@@ -37,9 +38,11 @@ from services.yahoo_etf_service import (  # noqa: E402
     get_etf_holdings,
     validate_ticker,
 )
-from services.analytics_service import get_indicators, get_risk_metrics, get_correlation_matrix  # noqa: E402
+from services.analytics_service import get_indicators, get_risk_metrics, get_correlation_matrix, backtest_forecast  # noqa: E402
 from services.alerts_service import evaluate  # noqa: E402
 from services.montecarlo_service import simulate_portfolio  # noqa: E402
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Finance PWA API")
 
@@ -810,6 +813,7 @@ async def get_recommended_etfs(
     for etf in etf_list:
         etf_dict = {**etf}
         etf_dict["match_score"] = _compute_match_score(etf_dict, profile)
+        etf_dict["match_breakdown"] = _compute_match_breakdown(etf_dict, profile)
         scored.append(etf_dict)
 
     scored.sort(key=lambda e: e["match_score"], reverse=True)
@@ -986,6 +990,17 @@ async def predict_stock(
                 ]
 
         confidence = 0.6 if model_used == "Qwen/Qwen2.5-72B-Instruct" else (0.70 if model_used == "ETS" else 0.55)
+
+        # Backtest (seulement sur modèle déterministe, pas LLM)
+        backtest = None
+        if model_used != "Qwen/Qwen2.5-72B-Instruct":
+            try:
+                backtest = backtest_forecast([float(p) for p in prices])
+            except ValueError as e:
+                logger.warning("[predict:backtest] Données insuffisantes: %s", e)
+            except Exception as e:
+                logger.error("[predict:backtest] Erreur calcul: %s", e)
+
         return {
             "symbol": symbol,
             "prediction": {
@@ -995,12 +1010,13 @@ async def predict_stock(
                 "history": [round(p, 2) for p in prices],
                 "confidence": confidence,
                 "model": model_used,
+                "backtest": backtest,
             },
         }
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[predict] Erreur: {e}")
+        logger.exception("predict failed: %s", e)
         raise HTTPException(status_code=500, detail="Erreur lors de la prédiction")
 
 
@@ -1121,6 +1137,63 @@ def _compute_match_score(etf: dict, profile: dict) -> float:
         score += 10 if ter <= 0.2 else (5 if ter <= 0.3 else 0)
 
     return round(min(score, 100.0), 1)
+
+
+def _compute_match_breakdown(etf: dict, profile: dict) -> dict:
+    """Détail par composante du score de correspondance (somme == match_score)."""
+    risk_score = 0.0
+    horizon_score = 0.0
+    esg_score = 0.0
+    ter_score = 0.0
+    goal_score = 0.0
+
+    risk = profile["risk_tolerance"]
+    perf = etf.get("perf1y", 0) or 0
+    if risk >= 4:
+        risk_score = 30 if perf >= 10 else (20 if perf >= 0 else 10)
+    elif risk == 3:
+        risk_score = 30 if 0 <= perf <= 15 else 15
+    else:
+        risk_score = 30 if perf < 10 else (15 if perf >= 0 else 25)
+
+    horizon = profile["investment_horizon"]
+    ter = etf.get("ter", 0.5) or 0.5
+    if horizon == "long":
+        horizon_score = 25 if perf >= 8 else (15 if perf >= 0 else 5)
+    elif horizon == "medium":
+        horizon_score = 25 if 4 <= perf <= 15 else 12
+    else:
+        horizon_score = 25 if ter <= 0.2 else (15 if ter <= 0.3 else 5)
+
+    esg_pref = bool(profile.get("esg_preference", 0))
+    etf_esg = etf.get("esg", "B") or "B"
+    if esg_pref:
+        esg_score = _ESG_SCORES.get(etf_esg, 6)
+    else:
+        esg_score = 20
+
+    if ter <= 0.15:
+        ter_score = 15
+    elif ter <= 0.25:
+        ter_score = 10
+    elif ter <= 0.35:
+        ter_score = 5
+
+    goal = profile["investment_goal"]
+    if goal == "growth":
+        goal_score = 10 if perf >= 10 else (5 if perf >= 0 else 0)
+    elif goal == "income":
+        goal_score = _ESG_SCORES.get(etf_esg, 6) // 2
+    else:
+        goal_score = 10 if ter <= 0.2 else (5 if ter <= 0.3 else 0)
+
+    return {
+        "risk": risk_score,
+        "horizon": horizon_score,
+        "esg": esg_score,
+        "ter": ter_score,
+        "goal": goal_score,
+    }
 
 
 # ── Quiz ──────────────────────────────────────────────────────────────────────

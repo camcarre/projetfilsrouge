@@ -3,7 +3,9 @@ yahoo_etf_service.py — Port Python de yahooEtfService.js
 Fournit : get_etfs, get_etf_details, get_etf_performance, get_etf_holdings,
           validate_ticker, calc_match
 """
+import io
 import json
+import logging
 import re
 import time
 import random
@@ -11,7 +13,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Optional
 
+import pandas as pd
+import requests
 import yfinance as yf
+
+logger = logging.getLogger(__name__)
 
 _DATA_DIR = Path(__file__).parent.parent / "data"
 
@@ -74,6 +80,46 @@ def _calculate_volatility(historical: list) -> float:
     return (variance ** 0.5) * (252 ** 0.5) * 100  # Volatilité annualisée
 
 
+def _fetch_stooq_history(ticker: str) -> Optional[list]:
+    """
+    Fallback Stooq.com pour récupérer l'historique quotidien d'un ticker.
+    Renvoie une liste de dicts au même format que yfinance, ou None en cas d'échec.
+    """
+    try:
+        url = f"https://stooq.com/q/d/l/?s={ticker.lower()}&i=d"
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+        text = resp.text
+        if not text or text.strip().lower().startswith("no data"):
+            logger.warning("[stooq] Pas de données pour %s", ticker)
+            return None
+        df = pd.read_csv(io.StringIO(text))
+        if df.empty or "Close" not in df.columns:
+            logger.warning("[stooq] CSV vide ou inattendu pour %s", ticker)
+            return None
+        rows: list = []
+        for idx, row in df.iterrows():
+            date_val = row.get("Date") or row.get("date")
+            if hasattr(date_val, "isoformat"):
+                date_str = date_val.isoformat()
+            else:
+                date_str = str(date_val) if date_val is not None else str(idx)
+            close = float(row.get("Close", 0) or 0)
+            rows.append({
+                "date": date_str,
+                "open": float(row.get("Open", 0) or 0),
+                "high": float(row.get("High", 0) or 0),
+                "low": float(row.get("Low", 0) or 0),
+                "close": close,
+                "volume": int(row.get("Volume", 0) or 0),
+                "adjClose": close,
+            })
+        return rows
+    except Exception as e:
+        logger.warning("[stooq] Échec fetch pour %s: %s", ticker, e)
+        return None
+
+
 def get_etf_details(ticker: str) -> dict:
     """Récupère les détails complets d'un ETF via yfinance."""
     try:
@@ -117,7 +163,13 @@ def get_etf_details(ticker: str) -> dict:
                         "adjClose": float(row.get("Close", 0) or 0),
                     })
         except Exception as e:
-            print(f"[getEtfDetails] Historical non disponible pour {ticker}: {e}")
+            logger.info("yfinance failed for %s, attempting Stooq... (%s)", ticker, e)
+            stooq_data = _fetch_stooq_history(ticker)
+            if stooq_data:
+                historical = stooq_data
+                logger.info("Stooq fallback OK pour %s (%d lignes)", ticker, len(historical))
+            else:
+                logger.warning("Stooq fallback aussi en échec pour %s", ticker)
 
         # Sustainability/ESG
         esg_score = None
