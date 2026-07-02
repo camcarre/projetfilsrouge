@@ -223,7 +223,7 @@ def _ets_forecast(values: np.ndarray, horizon: int) -> np.ndarray:
         from statsmodels.tsa.holtwinters import ExponentialSmoothing  # noqa: PLC0415
 
         model = ExponentialSmoothing(
-            values, trend="add", initialization_method="estimated"
+            values, trend="add", damped_trend=True, initialization_method="estimated"
         ).fit(optimized=True)
         return np.asarray(model.forecast(horizon), dtype=float)
     except Exception as err:  # pragma: no cover - fallback

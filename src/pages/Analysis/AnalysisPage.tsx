@@ -288,7 +288,7 @@ export function AnalysisPage() {
                 )}
                 {!showPreview && rawModel && rawModel !== 'linear-regression' && (
                   <span title={rawModel} className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-700/40">
-                    IA · {rawModel.split('/').pop()}
+                    {String(rawModel).includes('/') ? `IA · ${rawModel.split('/').pop()}` : rawModel}
                   </span>
                 )}
               </div>

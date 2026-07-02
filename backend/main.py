@@ -974,7 +974,7 @@ async def predict_stock(
             try:
                 from statsmodels.tsa.holtwinters import ExponentialSmoothing  # noqa: PLC0415
                 ets_model = ExponentialSmoothing(
-                    np.array(prices, dtype=float), trend='add', initialization_method="estimated"
+                    np.array(prices, dtype=float), trend='add', damped_trend=True, initialization_method="estimated"
                 ).fit(optimized=True)
                 forecast = [round(float(v), 2) for v in ets_model.forecast(30)]
                 model_used = "ETS"
