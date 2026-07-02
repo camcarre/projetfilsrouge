@@ -2,10 +2,14 @@
 
 ## Current Position
 
-Milestone: v0.5 Features Sprint 2 — Complete
-Phase: 09 — Monte Carlo + Alertes — Complete (backend + frontend, vérifié navigateur)
-Status: Phases 08 et 09 clôturées, mergées dans main
-Last activity: 2026-07-02 — merge feat/profil-editable + feat/phase-09 dans main ; Monte Carlo (cône UI + fix tz) et alertes (CRUD + notifications) vérifiés end-to-end
+Milestone: v0.7 — Maximiser la note (grille d'évaluation) — In Progress (0/3 phases)
+Phase: 12 — Déploiement public (VPS) — Planning
+Loop: `PLAN◉ APPLY○ UNIFY○`
+Status: Phases 11+13 Complete. Plan 12-01 créé (VPS bare-metal + Nginx + systemd). Checkpoint human-action : attend accès SSH/VPS de Camille.
+Next: Camille fournit IP + SSH + domaine → exécution du déploiement
+Last activity: 2026-07-02 — évaluation projet (EVALUATION.md, 122/160) → milestone v0.7 créé, phases 11/12/13 mappées sur les leviers de points
+
+Boundaries (hors-scope milestone) : features non notées, refonte déco, migration base lourde (Supabase/VPS non requise pour l'URL live).
 
 Progress:
 - Migration Backend (v0.1): [██████████] 100% ✓
