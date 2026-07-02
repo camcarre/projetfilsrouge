@@ -7,7 +7,7 @@ import { CombinedChart } from '@/components/ui/CombinedChart'
 import { CorrelationHeatmap } from '@/components/ui/CorrelationHeatmap'
 import { getStockPrediction } from '@/services/predictionService'
 import { getIndicators, getRiskMetrics, getCorrelationMatrix } from '@/services/analyticsService'
-import type { IndicatorsResponse, RiskMetrics, CorrelationMatrix } from '@/types/analytics'
+import type { IndicatorsResponse, RiskMetrics, CorrelationMatrix, Backtest } from '@/types/analytics'
 
 /** Extrait une valeur numérique ou une série du retour API pour l'affichage */
 function parsePrediction(prediction: unknown): { value?: number; series?: number[]; history?: number[]; raw: unknown } {
@@ -351,6 +351,64 @@ export function AnalysisPage() {
         )}
       </Card>
 
+      {/* ── Fiabilité du modèle (Backtest) ────────────────────────────────────── */}
+      {!showPreview && parsed && (
+        <Card title="Fiabilité du modèle (backtest)" className="mb-5">
+          {(() => {
+            const backtest = (parsed.raw as any)?.backtest as Backtest | undefined | null
+            if (!backtest) {
+              return (
+                <p className="text-[13px] text-neutral-500 dark:text-neutral-400">
+                  Backtest indisponible (données insuffisantes ou prédiction IA).
+                </p>
+              )
+            }
+            return (
+              <div className="space-y-3">
+                <p className="text-[12px] text-neutral-500 dark:text-neutral-400 mb-3">
+                  Évaluation out-of-sample : {backtest.train_size} points train, {backtest.test_size} points test (horizon={backtest.horizon}).
+                </p>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800/30 px-4 py-3">
+                    <p className="text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">RMSE</p>
+                    <p className="text-lg font-semibold tabular-nums text-neutral-800 dark:text-neutral-100">
+                      {backtest.rmse.toFixed(4)}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800/30 px-4 py-3">
+                    <p className="text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">MAE</p>
+                    <p className="text-lg font-semibold tabular-nums text-neutral-800 dark:text-neutral-100">
+                      {backtest.mae.toFixed(4)}
+                    </p>
+                  </div>
+                  <div className={`rounded-xl border px-4 py-3 ${
+                    backtest.r2 >= 0.5
+                      ? 'border-emerald-200 dark:border-emerald-700/40 bg-emerald-50 dark:bg-emerald-900/20'
+                      : backtest.r2 >= 0.2
+                      ? 'border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800/30'
+                      : 'border-red-200 dark:border-red-700/40 bg-red-50 dark:bg-red-900/20'
+                  }`}>
+                    <p className="text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1">R²</p>
+                    <p className={`text-lg font-semibold tabular-nums ${
+                      backtest.r2 >= 0.5
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : backtest.r2 >= 0.2
+                        ? 'text-neutral-800 dark:text-neutral-100'
+                        : 'text-red-600 dark:text-red-400'
+                    }`}>
+                      {backtest.r2.toFixed(4)}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-3">
+                  Modèle : <span className="font-medium">{backtest.model}</span>
+                </p>
+              </div>
+            )
+          })()}
+        </Card>
+      )}
+
       {/* ── Indicateurs techniques ─────────────────────────────────────────── */}
       <Card title="Indicateurs techniques" className="mb-5">
         {indicatorsLoading && (
@@ -492,7 +550,7 @@ export function AnalysisPage() {
         </Card>
 
         {/* ── Corrélation entre actifs ──────────────────────────────────── */}
-        <Card title="Corrélation entre actifs">
+        <Card title="Corrélation entre actifs" className="md:col-span-2 lg:col-span-3">
           {correlationLoading && (
             <div className="flex items-center gap-2 text-[13px] text-neutral-500 dark:text-neutral-400">
               <Spinner size="sm" /> Calcul de la corrélation…
@@ -507,7 +565,7 @@ export function AnalysisPage() {
             <Alert variant="error">{correlationError}</Alert>
           )}
           {!correlationLoading && correlation && (
-            <CorrelationHeatmap tickers={correlation.tickers} matrix={correlation.matrix} />
+            <CorrelationHeatmap labels={correlation.tickers} matrix={correlation.matrix} />
           )}
         </Card>
 

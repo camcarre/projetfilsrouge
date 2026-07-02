@@ -9,7 +9,7 @@ import { fetchEtfs, type EtfRow } from '@/services/etfService'
 import { fetchRecommendedEtfs } from '@/services/profileService'
 import { fetchEtfHistory, formatHistoryForChart } from '@/services/etfHistoryService'
 import { CombinedChart } from '@/components/ui/CombinedChart'
-import { MultiLineChart, type Series } from '@/components/ui/MultiLineChart'
+import { MultiLineChart, type MultiLineSeries as Series } from "@/components/ui/MultiLineChart"
 import type { RootState } from '@/store'
 
 const SECTORS = ['Tous', 'Large cap', 'ESG', 'Emerging', 'Sectoriel', 'Diversifié']
@@ -151,12 +151,14 @@ export function EtfPage() {
 
     Promise.allSettled(compareSelected.map((etf) => fetchEtfHistory(etf.ticker, '3mo'))).then((results) => {
       if (cancelled) return
+      const PALETTE = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6']
       const series: Series[] = results.map((result, i) => {
         const etf = compareSelected[i]
+        const color = PALETTE[i % PALETTE.length]
         if (result.status === 'fulfilled') {
-          return { label: etf.ticker, data: formatHistoryForChart(result.value) }
+          return { key: etf.ticker, name: etf.ticker, color, data: formatHistoryForChart(result.value) }
         }
-        return { label: etf.ticker, data: [], failed: true }
+        return { key: etf.ticker, name: etf.ticker, color, data: [] } as Series
       })
       setCompareChartData(series)
       setCompareChartLoading(false)
@@ -424,6 +426,20 @@ export function EtfPage() {
                   {etf.match} %
                 </span>
               </div>
+              {(etf as any).match_breakdown && (
+                <details className="mt-2 ml-0 sm:ml-2 text-[11px] text-neutral-600 dark:text-neutral-400">
+                  <summary className="cursor-pointer select-none hover:text-emerald-600 dark:hover:text-emerald-400">
+                    Détail du score
+                  </summary>
+                  <div className="mt-1.5 grid grid-cols-2 sm:grid-cols-5 gap-x-3 gap-y-0.5 tabular-nums">
+                    <span>risk: <b className="text-emerald-600 dark:text-emerald-400">{(etf as any).match_breakdown.risk}</b> pts</span>
+                    <span>horizon: <b className="text-emerald-600 dark:text-emerald-400">{(etf as any).match_breakdown.horizon}</b> pts</span>
+                    <span>esg: <b className="text-emerald-600 dark:text-emerald-400">{(etf as any).match_breakdown.esg}</b> pts</span>
+                    <span>ter: <b className="text-neutral-700 dark:text-neutral-200">{(etf as any).match_breakdown.ter}</b> pts</span>
+                    <span>goal: <b className="text-emerald-600 dark:text-emerald-400">{(etf as any).match_breakdown.goal}</b> pts</span>
+                  </div>
+                </details>
+              )}
             </li>
           )))}
         </ul>

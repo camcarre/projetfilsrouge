@@ -114,3 +114,44 @@ Issue #6 :
 - Build frontend + service Nginx
 Status: Not started
 Depends on: Phase 08, Phase 09
+
+---
+
+## Milestone v0.7 — Maximiser la note (grille d'évaluation) 🚧 In Progress
+
+Source : `EVALUATION.md` (122/160). Objectif : combler les manques prouvés `fichier:ligne` pour monter la note.
+Phases : 0 of 3 complete.
+
+| Phase | Nom | Plans | Status | Completed |
+|-------|-----|-------|--------|-----------|
+| 11 | ML évalué (backtest) | 1/1 | ✅ Complete | 2026-07-02 |
+| 12 | Déploiement public (URL live) | 1/1 | ✅ Complete | 2026-07-02 |
+| 13 | Preuves niveau A | 1/1 | ✅ Complete | 2026-07-02 |
+
+### Phase 11 — ML évalué (backtest) ✅ Complete
+Focus : compétence 5 (C→B, +3), le levier le plus rentable.
+Livré : `backtest_forecast` (split train/test + RMSE/MAE/R² out-of-sample) `analytics_service.py:225`, branché dans `predict_stock` `main.py:994`, carte UI `AnalysisPage.tsx:356`, tests verts `test_predict_backtest.py`. SUMMARY : `.paul/phases/11-ml-backtest/11-01-SUMMARY.md`.
+- Split train/test sur l'historique de cours de `GET /api/predict/stock` (`backend/main.py:907`)
+- Métriques d'évaluation out-of-sample : RMSE, MAE, R²
+- Endpoint/retour exposant les métriques + affichage UI sur la page Analyse
+Plans : TBD (définis en /paul:plan)
+Status: Not started
+
+### Phase 12 — Déploiement public (URL live)
+Focus : compétence 7 (B→A, +5). Chemin le plus léger (pas de VPS/Supabase — remplace Phase 10 pour l'objectif note).
+- Front déployé (Vercel/Netlify) + backend hébergé (Render/Railway) → URL publique
+- Job `deploy` ajouté à `.github/workflows/ci.yml`
+- Variables d'env prod + `VITE_API_URL` pointant le backend live
+Plans : TBD (définis en /paul:plan)
+Status: Not started
+Depends on: CI existant (Phase 06)
+
+### Phase 13 — Preuves niveau A
+Focus : compétences 1/3/4/6 (B→A). Renforcer les preuves existantes.
+- Comp 1 : 2ᵉ source de données croisée + refresh planifié
+- Comp 3 : formaliser l'EDA (`docs/analyse-projet.ipynb`) avec conclusions écrites + distributions
+- Comp 4 : interactivité graphes (tooltips/zoom/légende) + accessibilité couleurs heatmap
+- Comp 6 : transparence du scoring reco (`_compute_match_score`) + explication des poids
+- Corriger `CLAUDE.md` (backend décrit comme Express/JS alors qu'il est FastAPI/Python)
+Plans : TBD (définis en /paul:plan)
+Status: Not started

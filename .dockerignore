@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+.paul
+e2e
+playwright-report
+test-results
+backend
+*.md
+.env
+.env.*
+ruvector.db

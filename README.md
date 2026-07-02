@@ -2,6 +2,8 @@
 
 Une Progressive Web App (PWA) pour visualiser vos finances personnelles, analyser votre portefeuille et recevoir des recommandations personnalisées d'ETF.
 
+**🌐 App en ligne : https://finance.camcamcarre.fr** — déploiement : voir [deploy/README.md](deploy/README.md).
+
 **Documentation** : cahier des charges, répartition des tâches, backend, structure → voir le dossier **[docs/](docs/)**.
 
 ## Lancer le projet (front + back)

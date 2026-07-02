@@ -2,6 +2,8 @@
 analytics_service.py — Indicateurs techniques + métriques de risque
 Utilisé par /api/analyze/indicators/{ticker} et /api/analyze/risk/{ticker}
 """
+import logging
+
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -11,7 +13,9 @@ try:
     _HAS_PANDAS_TA = True
 except ImportError:
     _HAS_PANDAS_TA = False
-    print("[analytics] pandas_ta non disponible — calcul numpy fallback")
+    logging.warning("pandas_ta non disponible — calcul numpy fallback")
+
+logger = logging.getLogger(__name__)
 
 
 def _ema(series: np.ndarray, span: int) -> np.ndarray:
@@ -181,6 +185,17 @@ def get_correlation_matrix(tickers: list[str], period: str = "1y") -> dict:
     quotidiens d'au moins 2 tickers.
     """
     closes = yf.download(tickers, period=period, progress=False)["Close"]
+    if isinstance(closes, pd.Series):
+        closes = closes.to_frame()
+
+    # Écarter les tickers sans données de marché (ex : obligations non cotées sur Yahoo,
+    # ticker invalide) : sinon une seule colonne tout-NaN vide le dropna(how="any").
+    usable = [t for t in closes.columns if closes[t].notna().sum() >= 11]
+    excluded = [str(t) for t in closes.columns if t not in usable]
+    closes = closes[usable]
+    if closes.shape[1] < 2:
+        raise ValueError("Pas assez d'actifs avec des données de marché pour calculer une corrélation")
+
     returns = closes.pct_change().dropna(how="any")
     if len(returns) < 10:
         raise ValueError("Pas assez de données communes entre les actifs pour calculer une corrélation")
@@ -192,4 +207,98 @@ def get_correlation_matrix(tickers: list[str], period: str = "1y") -> dict:
         "tickers": ordered_tickers,
         "matrix": corr.values.tolist(),
         "period": period,
+        "excluded": excluded,
+    }
+
+
+# ── Backtest forecast ────────────────────────────────────────────────────────
+
+MIN_BACKTEST_POINTS = 20
+HORIZON = 15
+
+
+def _ets_forecast(values: np.ndarray, horizon: int) -> np.ndarray:
+    """Tente un lissage exponentiel (statsmodels), fallback polyfit."""
+    try:
+        from statsmodels.tsa.holtwinters import ExponentialSmoothing  # noqa: PLC0415
+
+        model = ExponentialSmoothing(
+            values, trend="add", initialization_method="estimated"
+        ).fit(optimized=True)
+        return np.asarray(model.forecast(horizon), dtype=float)
+    except Exception as err:  # pragma: no cover - fallback
+        logger.warning("ETS indisponible, fallback polyfit: %s", err)
+        x = np.arange(len(values))
+        slope, intercept = np.polyfit(x, values, 1)
+        future_x = np.arange(len(values), len(values) + horizon)
+        return slope * future_x + intercept
+
+
+def backtest_forecast(prices: list[float], horizon: int | None = None) -> dict:
+    """
+    Backtest d'une prévision ETS/polyfit sur la série `prices`.
+
+    - horizon par défaut = min(15, max(5, len(prices) // 5)), garde au moins 20 points train.
+    - Découpe rigide : train = prices[:-K], test = prices[-K:].
+    - Tente ETS ; fallback polyfit si ETS échoue.
+    - Retourne {horizon, train_size, test_size, rmse, mae, r2, model}.
+
+    Lève ValueError si la série est trop courte (< 20 points minimum).
+    """
+    if prices is None or len(prices) < MIN_BACKTEST_POINTS:
+        raise ValueError(
+            f"Série trop courte pour backtest (>= {MIN_BACKTEST_POINTS} requis, "
+            f"{0 if prices is None else len(prices)} reçus)"
+        )
+
+    arr = np.asarray(prices, dtype=float)
+    if not np.all(np.isfinite(arr)):
+        raise ValueError("Série contient des valeurs non finies")
+
+    # Calcul horizon : min(15, max(5, len(prices)//5)) en gardant au moins 20 points train
+    if horizon is None:
+        horizon = min(15, max(5, len(arr) // 5))
+        # Garantir min 20 points train : si len(arr) - horizon < 20, augmenter train
+        if len(arr) - horizon < MIN_BACKTEST_POINTS:
+            horizon = max(5, len(arr) - MIN_BACKTEST_POINTS)
+
+    if horizon < 5 or horizon >= len(arr) - MIN_BACKTEST_POINTS:
+        raise ValueError(
+            f"Découpage train/test insuffisant : horizon={horizon}, "
+            f"len={len(arr)}, besoin min 20 train"
+        )
+
+    # Split rigide : train = prices[:-horizon], test = prices[-horizon:]
+    train = arr[:-horizon]
+    test = arr[-horizon:]
+
+    # Tenter ETS, fallback polyfit
+    model_used = "ETS"
+    try:
+        forecast = _ets_forecast(train, horizon)
+    except Exception as err:
+        logger.warning("ETS échoué, fallback polyfit: %s", err)
+        x = np.arange(len(train))
+        slope, intercept = np.polyfit(x, train, 1)
+        future_x = np.arange(len(train), len(train) + horizon)
+        forecast = slope * future_x + intercept
+        model_used = "linear-regression"
+
+    # Métriques out-of-sample
+    errors = forecast - test
+    mae = float(np.mean(np.abs(errors)))
+    rmse = float(np.sqrt(np.mean(errors ** 2)))
+
+    ss_res = float(np.sum(errors ** 2))
+    ss_tot = float(np.sum((test - np.mean(test)) ** 2))
+    r2 = 1.0 - ss_res / ss_tot if ss_tot > 0 else 0.0
+
+    return {
+        "horizon": horizon,
+        "train_size": int(len(train)),
+        "test_size": int(len(test)),
+        "rmse": round(rmse, 4),
+        "mae": round(mae, 4),
+        "r2": round(r2, 4),
+        "model": model_used,
     }
