@@ -11,7 +11,6 @@ exactement à la valeur actuelle du portefeuille.
 
 Usage (dans le conteneur backend) : python seed_history.py
 """
-import math
 import random
 import sqlite3
 from datetime import datetime, timedelta
@@ -20,8 +19,8 @@ from pathlib import Path
 DB_PATH = Path(__file__).parent / "data" / "finance.db"
 EMAIL = "demo@finance.app"
 DAYS = 365
-ANNUAL_DRIFT = 0.28          # tendance ~ +28 %/an
-ANNUAL_VOL = 0.16            # volatilité annualisée réaliste (~16 %)
+START_RATIO = 0.80           # départ ~ -20 % => ~ +25 % sur l'année
+WIGGLE = 0.06                # amplitude max du bruit (±6 %)
 SEED = 42                    # reproductible
 
 
@@ -40,17 +39,25 @@ def main() -> None:
         current = sum(q * p for q, p in assets) or 60000.0
 
         rng = random.Random(SEED)
-        mu = ANNUAL_DRIFT / 252.0
-        sigma = ANNUAL_VOL / math.sqrt(252.0)
+        n = DAYS
+        # Marche aléatoire...
+        walk = [0.0]
+        for _ in range(n):
+            walk.append(walk[-1] + rng.gauss(0, 1))
+        # ...ramenée à un pont brownien (extrémités fixées à 0) pour un bruit réaliste
+        # sans dérive incontrôlée.
+        bridge = [walk[i] - (i / n) * walk[n] for i in range(n + 1)]
+        peak = max(abs(x) for x in bridge) or 1.0
+        bridge = [x / peak * WIGGLE for x in bridge]
 
-        # Marche aléatoire géométrique : prix relatif cumulé.
-        rel = [1.0]
-        for _ in range(DAYS):
-            shock = rng.gauss(mu, sigma)
-            rel.append(rel[-1] * math.exp(shock))
-        # Rescale pour finir exactement à la valeur actuelle.
-        scale = current / rel[-1]
-        path = [round(v * scale, 2) for v in rel]
+        start = current * START_RATIO
+        path = []
+        for i in range(n + 1):
+            trend = start + (current - start) * (i / n)
+            path.append(round(trend * (1 + bridge[i]), 2))
+        # Extrémités exactes.
+        path[0] = round(start, 2)
+        path[-1] = round(current, 2)
 
         conn.execute("DELETE FROM portfolio_history WHERE user_id = ?", (user_id,))
         now = datetime.utcnow()
