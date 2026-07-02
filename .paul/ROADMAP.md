@@ -59,3 +59,14 @@ Suite de tests end-to-end couvrant les flux critiques :
 - Plan 01 : Installation Playwright, config, 4 spec files (auth, dashboard, analysis, portfolio)
 Status: Planning
 Depends on: Phase 05 ✅
+
+---
+
+## Milestone v0.5 — Features Sprint 2 (In progress)
+
+### Phase 09 — Monte Carlo + Alertes (Planning)
+Backend d'abord (frontend en phase suivante) :
+- Plan 01 : Monte Carlo — service GBM + endpoint `GET /api/portfolio/montecarlo` (percentiles p5-p95 + VaR)
+- Plan 02 : Alertes in-app — table alert_rules + évaluation seuils au refresh portfolio → notifications dédup
+Status: Planning
+Depends on: Phase 04 ✅ (backend FastAPI + notifications)

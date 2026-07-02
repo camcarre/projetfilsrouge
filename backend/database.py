@@ -97,6 +97,23 @@ CREATE TABLE IF NOT EXISTS notifications (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- alert_rules : règles déclarées par l'utilisateur, évaluées à chaque GET /api/assets.
+-- Dédup des notifications déclenchées : stratégie "même message + 24h glissantes"
+-- (voir services/alerts_service.py). On n'ajoute PAS de colonne à `notifications`
+-- pour rester compatible avec le schéma existant et garder la table générique.
+CREATE TABLE IF NOT EXISTS alert_rules (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    scope TEXT NOT NULL CHECK (scope IN ('asset', 'portfolio')),
+    symbol TEXT,
+    metric TEXT NOT NULL CHECK (metric IN ('day_change', 'vs_pru')),
+    direction TEXT NOT NULL CHECK (direction IN ('below', 'above')),
+    threshold REAL NOT NULL,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
 """
 
 _conn: sqlite3.Connection | None = None

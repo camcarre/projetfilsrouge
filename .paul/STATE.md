@@ -2,11 +2,12 @@
 
 ## Current Position
 
-Milestone: Advanced Analytics (v0.2)
-Phase: 06 — E2E Tests (Playwright)
-Plan: 06-01 APPLY complete → UNIFY next
-Status: Phase 06 EN COURS — Tasks 1-4 exécutés, checkpoint:human-verify en attente
-Last activity: 2026-06-02 — 06-01 APPLY (Playwright MCP vérification: 7/7 tests PASS)
+Milestone: Features Sprint 2 (v0.5)
+Phase: 09 — Monte Carlo + Alertes (backend)
+Plan: 09-01 + 09-02 APPLY complete → UNIFY next
+Status: PLAN◉ APPLY◉ UNIFY○ — backend Monte Carlo + Alertes livré, 21 tests verts
+Next action: /paul:unify (puis frontend phase suivante)
+Last activity: 2026-07-02 — APPLY 09-01/09-02 : endpoints montecarlo + alerts, hook get_assets, 6 endpoints restaurés (agent avait écrasé main.py)
 
 Progress:
 - Migration Backend: [██████████] 100% ✓
