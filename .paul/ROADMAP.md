@@ -83,14 +83,14 @@ Depends on: Phase 02
 
 ---
 
-## Milestone v0.5 — Features Sprint 2 (Not started)
+## Milestone v0.5 — Features Sprint 2 (In progress)
 
-### Phase 08 — Comparateur ETF + VaR UI + Corrélation (Not started)
+### Phase 08 — Comparateur ETF + VaR UI + Corrélation (Planning)
 Sprint 2 — issues #5 + #9 + #12 :
-- Plan 01 : Comparateur ETF multi-courbes (UI — endpoint /api/etfs/compare déjà prêt)
-- Plan 02 : VaR + Drawdown + Sharpe sur page Analyse (UI — backend analytics_service.py déjà prêt)
-- Plan 03 : Corrélation entre actifs — endpoint backend + matrice UI
-Status: Not started
+- Plan 01 : Comparateur ETF multi-courbes (UI — endpoint /api/etfs/{ticker}/history déjà prêt) — PLAN créé
+- Plan 02 : VaR + Drawdown + Sharpe sur page Analyse (UI — backend analytics_service.py déjà prêt) — pas encore planifié
+- Plan 03 : Corrélation entre actifs — endpoint backend + matrice UI — pas encore planifié
+Status: Planning
 Depends on: Phase 05 ✅
 
 ### Phase 09 — Monte Carlo + Alertes + Auth Refresh (Not started)

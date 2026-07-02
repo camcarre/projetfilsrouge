@@ -2,11 +2,11 @@
 
 ## Current Position
 
-Milestone: v0.3 Qualité & Tests
-Phase: 06-02 CI/CD GitHub Actions — Planning
-Plan: 06-02-PLAN.md créé, en attente d'approbation
+Milestone: v0.5 Features Sprint 2
+Phase: 08 Comparateur ETF + VaR UI + Corrélation — Planning
+Plan: 08-01 créé, en attente d'approbation
 Status: PLAN créé, prêt pour APPLY
-Last activity: 2026-06-02 — ROADMAP mis à jour, 06-02-PLAN.md + 07-01-PLAN.md créés
+Last activity: 2026-07-02 — 08-01-PLAN.md créé (Comparateur ETF multi-courbes, issue #9)
 
 Progress:
 - Migration Backend (v0.1): [██████████] 100% ✓
@@ -16,38 +16,42 @@ Progress:
 - Phase 06-01 (Playwright): [██████████] 100% ✓
 - Phase 06-02 (CI/CD): [██████████] 100% ✓
 - Phase 07-02 (Skeleton/UX): [██████████] 100% ✓
+- Phase 08 (Comparateur/VaR/Corrélation): [░░░░░░░░░░] 0% — plan 01/3 créé
 
 ## Loop Position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [07-02 loop fermé — Skeleton/UX COMPLETE]
+  ✓        ○        ○     [08-01 plan créé, en attente d'approbation]
 ```
 
 ## Session Continuity
 
-Last session: 2026-06-02
-Stopped at: Plans 06-02 + 07-01 créés
-Next action: human-verify phase 07-02, puis phase 08 (Comparateur ETF + VaR UI)
-Resume file: .paul/phases/07-sprint1-features/07-02-SUMMARY.md
+Last session: 2026-07-02
+Stopped at: Plan 08-01 créé
+Next action: Revue et approbation du plan 08-01, puis /paul:apply .paul/phases/08-etf-comparator/08-01-PLAN.md
+Resume file: .paul/phases/08-etf-comparator/08-01-PLAN.md
 
 ## Plans créés (prêts à exécuter)
 
 | Plan | Fichier | Issue GitHub | Priorité |
 |------|---------|--------------|----------|
-| 06-02 | .paul/phases/06-e2e-tests/06-02-PLAN.md | #11 CI/CD | Sprint 1 immédiat |
-| 07-01 | .paul/phases/07-sprint1-features/07-01-PLAN.md | #4 Export CSV | Sprint 1 |
+| 08-01 | .paul/phases/08-etf-comparator/08-01-PLAN.md | #9 Comparateur ETF | Sprint 2 |
 
 ## En attente (phases planifiées dans ROADMAP)
 
 - Phase 06-03 — Lighthouse performance
-- Phase 07-02 — Skeleton loaders + états vides (#3)
-- Phase 08 — Comparateur ETF + VaR UI + Corrélation (#5, #9, #12)
+- Phase 08-02 — VaR + Drawdown + Sharpe UI (#5) — pas encore planifié
+- Phase 08-03 — Corrélation entre actifs (#12) — pas encore planifié
 - Phase 09 — Monte Carlo + Alertes + Auth refresh (#8, #13, #14)
 - Phase 10 — Déploiement production (#6)
 - Phase 01 — Quick Wins UI
 - Phase 02 — Composants Feedback
 - Phase 03 — UX Flows
+
+## Notes
+
+- Issues GitHub #2, #3, #4, #11 restent OPEN alors que le code correspondant est mergé — à fermer manuellement.
 
 ## Decisions
 
