@@ -25,7 +25,8 @@ export function CorrelationHeatmap({ labels, matrix, caption = 'Matrice de corr�
       <figcaption className="text-sm font-medium text-neutral-800 dark:text-neutral-100 mb-2">
         {caption}
       </figcaption>
-      <table className="text-xs border-collapse w-full" role="table">
+      <div className="w-full overflow-x-auto">
+      <table className="text-xs border-collapse w-full min-w-[32rem]" role="table">
         <caption className="sr-only">{caption}</caption>
         <thead>
           <tr>
@@ -61,6 +62,7 @@ export function CorrelationHeatmap({ labels, matrix, caption = 'Matrice de corr�
           ))}
         </tbody>
       </table>
+      </div>
       <p className="mt-2 text-[11px] text-neutral-500 dark:text-neutral-400">
         Rouge = corrélation négative, Neutre = 0, Émeraude = corrélation positive.
       </p>

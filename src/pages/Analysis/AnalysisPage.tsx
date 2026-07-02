@@ -550,7 +550,7 @@ export function AnalysisPage() {
         </Card>
 
         {/* ── Corrélation entre actifs ──────────────────────────────────── */}
-        <Card title="Corrélation entre actifs">
+        <Card title="Corrélation entre actifs" className="md:col-span-2 lg:col-span-3">
           {correlationLoading && (
             <div className="flex items-center gap-2 text-[13px] text-neutral-500 dark:text-neutral-400">
               <Spinner size="sm" /> Calcul de la corrélation…
