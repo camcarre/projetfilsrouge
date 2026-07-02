@@ -46,9 +46,12 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Finance PWA API")
 
+_frontend_origin = os.environ.get("FRONTEND_ORIGIN", "*")
+_allow_origins = ["*"] if _frontend_origin == "*" else [o.strip() for o in _frontend_origin.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allow_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
