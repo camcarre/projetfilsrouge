@@ -37,7 +37,7 @@ from services.yahoo_etf_service import (  # noqa: E402
     get_etf_holdings,
     validate_ticker,
 )
-from services.analytics_service import get_indicators, get_risk_metrics  # noqa: E402
+from services.analytics_service import get_indicators, get_risk_metrics, get_correlation_matrix  # noqa: E402
 
 app = FastAPI(title="Finance PWA API")
 
@@ -741,6 +741,34 @@ async def analyze_risk(ticker: str, period: Optional[str] = "1y"):
     except Exception as e:
         print(f"[analyze:risk] Erreur {ticker}: {e}")
         raise HTTPException(status_code=503, detail="Données indisponibles pour ce ticker")
+
+
+@app.get("/api/analyze/correlation", status_code=200)
+async def analyze_correlation(
+    period: Optional[str] = "1y",
+    authorization: Optional[str] = Header(default=None),
+):
+    user_id = get_user_id(authorization)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Non authentifié")
+
+    db = get_db()
+    rows = db.execute(
+        "SELECT DISTINCT symbol FROM assets WHERE user_id = ?", (user_id,)
+    ).fetchall()
+    tickers = [r["symbol"] for r in rows]
+
+    if len(tickers) < 2:
+        raise HTTPException(status_code=400, detail="Au moins 2 actifs distincts requis pour calculer une corrélation")
+
+    try:
+        result = get_correlation_matrix(tickers, period or "1y")
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        print(f"[analyze:correlation] Erreur: {e}")
+        raise HTTPException(status_code=503, detail="Données indisponibles pour calculer la corrélation")
 
 
 # ── Prediction ────────────────────────────────────────────────────────────────

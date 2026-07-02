@@ -3,6 +3,7 @@ analytics_service.py — Indicateurs techniques + métriques de risque
 Utilisé par /api/analyze/indicators/{ticker} et /api/analyze/risk/{ticker}
 """
 import numpy as np
+import pandas as pd
 import yfinance as yf
 
 try:
@@ -171,4 +172,24 @@ def get_risk_metrics(ticker: str, period: str = "1y") -> dict:
         "max_drawdown": max_drawdown,
         "volatility": volatility,
         "sharpe_ratio": sharpe,
+    }
+
+
+def get_correlation_matrix(tickers: list[str], period: str = "1y") -> dict:
+    """
+    Calcule la matrice de corrélation de Pearson entre les rendements
+    quotidiens d'au moins 2 tickers.
+    """
+    closes = yf.download(tickers, period=period, progress=False)["Close"]
+    returns = closes.pct_change().dropna(how="any")
+    if len(returns) < 10:
+        raise ValueError("Pas assez de données communes entre les actifs pour calculer une corrélation")
+
+    corr = returns.corr().round(2)
+    ordered_tickers = list(corr.columns)
+
+    return {
+        "tickers": ordered_tickers,
+        "matrix": corr.values.tolist(),
+        "period": period,
     }
