@@ -2,11 +2,10 @@
 
 ## Current Position
 
-Milestone: v0.5 Features Sprint 2
-Phase: 08 Comparateur ETF + VaR UI + Corrélation — Planning
-Plan: 08-01 créé, en attente d'approbation
-Status: PLAN créé, prêt pour APPLY
-Last activity: 2026-07-02 — 08-01-PLAN.md créé (Comparateur ETF multi-courbes, issue #9)
+Milestone: v0.5 Features Sprint 2 — Complete
+Phase: 08 Comparateur ETF + VaR UI + Corrélation — Complete
+Status: UNIFY — phase 08 clôturée
+Last activity: 2026-07-02 — 08-01 (bug modale corrigé) + 08-03 (corrélation) codés, testés, commités
 
 Progress:
 - Migration Backend (v0.1): [██████████] 100% ✓
@@ -16,33 +15,29 @@ Progress:
 - Phase 06-01 (Playwright): [██████████] 100% ✓
 - Phase 06-02 (CI/CD): [██████████] 100% ✓
 - Phase 07-02 (Skeleton/UX): [██████████] 100% ✓
-- Phase 08 (Comparateur/VaR/Corrélation): [░░░░░░░░░░] 0% — plan 01/3 créé
+- Phase 08 (Comparateur/VaR/Corrélation): [██████████] 100% ✓
 
 ## Loop Position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ○        ○     [08-01 plan créé, en attente d'approbation]
+  ✓        ✓        ✓     [phase 08 loop fermé — COMPLETE]
 ```
 
 ## Session Continuity
 
 Last session: 2026-07-02
-Stopped at: Plan 08-01 créé
-Next action: Revue et approbation du plan 08-01, puis /paul:apply .paul/phases/08-etf-comparator/08-01-PLAN.md
-Resume file: .paul/phases/08-etf-comparator/08-01-PLAN.md
+Stopped at: Phase 08 clôturée
+Next action: Phase 06-03 (Lighthouse) ou Phase 09 (Monte Carlo + Alertes + Auth refresh)
+Resume file: .paul/phases/08-etf-comparator/08-03-PLAN.md
 
 ## Plans créés (prêts à exécuter)
 
-| Plan | Fichier | Issue GitHub | Priorité |
-|------|---------|--------------|----------|
-| 08-01 | .paul/phases/08-etf-comparator/08-01-PLAN.md | #9 Comparateur ETF | Sprint 2 |
+Aucun.
 
 ## En attente (phases planifiées dans ROADMAP)
 
 - Phase 06-03 — Lighthouse performance
-- Phase 08-02 — VaR + Drawdown + Sharpe UI (#5) — pas encore planifié
-- Phase 08-03 — Corrélation entre actifs (#12) — pas encore planifié
 - Phase 09 — Monte Carlo + Alertes + Auth refresh (#8, #13, #14)
 - Phase 10 — Déploiement production (#6)
 - Phase 01 — Quick Wins UI
@@ -51,7 +46,8 @@ Resume file: .paul/phases/08-etf-comparator/08-01-PLAN.md
 
 ## Notes
 
-- Issues GitHub #2, #3, #4, #11 restent OPEN alors que le code correspondant est mergé — à fermer manuellement.
+- Issues GitHub #2, #3, #4, #9, #11, #12 restent OPEN alors que le code correspondant est mergé — à fermer manuellement.
+- Incident session du 2026-07-02 : `backend/data/finance.db` supprimé par erreur durant un test manuel (fichier gitignored, non récupérable). La base est repartie vide — utilisateurs/actifs/transactions de dev perdus. Le compte `e2e-test@test.com` utilisé par la suite Playwright a été recréé avec un profil investisseur minimal pour ne pas casser `auth.spec.ts`.
 
 ## Decisions
 
