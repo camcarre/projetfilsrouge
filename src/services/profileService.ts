@@ -37,7 +37,7 @@ export async function fetchRecommendedEtfs(
   if (filters.terMax) params.set('terMax', filters.terMax)
   const qs = params.toString() ? `?${params.toString()}` : ''
 
-  const { data, error } = await api.get<{ etfs: (EtfRow & { match_score: number })[] }>(`/api/etfs/recommended${qs}`)
+  const { data, error } = await api.get<{ etfs: (EtfRow & { match_score: number; match_breakdown?: { risk: number; horizon: number; esg: number; ter: number; goal: number } })[] }>(`/api/etfs/recommended${qs}`)
   if (error) return { etfs: [], error: new Error(error.message) }
   const etfs = (data?.etfs ?? []).map(e => ({ ...e, match: Math.round(e.match_score) }))
   return { etfs, error: null }

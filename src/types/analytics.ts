@@ -1,3 +1,22 @@
+export interface Backtest {
+  horizon: number;
+  train_size: number;
+  test_size: number;
+  rmse: number;
+  mae: number;
+  r2: number;
+  model: string;
+}
+
+export interface Prediction {
+  current_price: number;
+  predicted_price: number;
+  forecast: number[];
+  history: number[];
+  confidence: number;
+  model: string;
+  backtest?: Backtest | null;
+}
 export interface IndicatorsResponse {
   ticker: string
   period: string
@@ -19,6 +38,28 @@ export interface RiskMetrics {
   max_drawdown: number
   volatility: number
   sharpe_ratio: number
+}
+
+export interface MatchBreakdown {
+  risk: number
+  horizon: number
+  esg: number
+  ter: number
+  goal: number
+}
+
+export interface RecommendedEtfRow {
+  id: string
+  name: string
+  ticker: string
+  ter: number
+  perf1y: number
+  esg: string
+  match: number
+  zone: string
+  theme: string
+  match_score?: number
+  match_breakdown?: MatchBreakdown
 }
 
 export interface CorrelationMatrix {
