@@ -94,12 +94,13 @@ Status: Complete
 Completed: 2026-07-02
 Depends on: Phase 05 ✅
 
-### Phase 09 — Monte Carlo + Alertes + Auth Refresh (Not started)
-Sprint backlog — issues #8 + #13 + #14 :
-- Plan 01 : Simulation Monte Carlo — endpoint /api/portfolio/montecarlo + graphique percentiles
-- Plan 02 : Alertes notifications in-app — vérification seuils au refresh portfolio
-- Plan 03 : Auth refresh token — expiry detection + redirection propre
-Status: Not started
+### Phase 09 — Monte Carlo + Alertes ✅ Complete
+Sprint backlog — issues #8 + #13 :
+- Plan 01 : Simulation Monte Carlo — service GBM + endpoint /api/portfolio/montecarlo (percentiles p5-p95 + VaR) + cône UI sur Portfolio ✓ — vérifié navigateur (bug tz crypto/actions trouvé et corrigé)
+- Plan 02 : Alertes in-app — table alert_rules + CRUD /api/alerts + évaluation seuils au refresh portfolio → notifications dédup 24h + UI Settings ✓ — vérifié end-to-end
+Status: Complete
+Completed: 2026-07-02
+Depends on: Phase 04 ✅ (backend FastAPI + notifications)
 
 ---
 

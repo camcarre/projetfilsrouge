@@ -5,6 +5,8 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { useTheme } from '@/contexts/ThemeContext'
 import type { RootState } from '@/store'
+import { AlertRulesCard } from '@/components/settings/AlertRulesCard'
+import { NotificationsCard } from '@/components/settings/NotificationsCard'
 
 const STORAGE_KEYS = {
   email: 'finance-pwa-notif-email',
@@ -88,7 +90,7 @@ function Toggle({
 
 export function SettingsPage() {
   const { theme, setTheme } = useTheme()
-  const { email, inApp, variationThreshold, dividends, update } = useNotificationPrefs()
+  const { email, inApp, dividends, update } = useNotificationPrefs()
   const navigate = useNavigate()
   const profile = useSelector((state: RootState) => state.profile.profile)
 
@@ -163,25 +165,6 @@ export function SettingsPage() {
             label="Notifications in-app"
             description="Afficher les alertes dans l'application."
           />
-          <div>
-            <label htmlFor="variation-threshold" className="block text-[14px] font-medium text-neutral-800 dark:text-neutral-100 mb-1">
-              Seuil de variation (%)
-            </label>
-            <input
-              id="variation-threshold"
-              type="number"
-              min="0"
-              max="100"
-              step="0.5"
-              placeholder="Ex. 5"
-              value={variationThreshold}
-              onInput={(e) => update('variationThreshold', (e.target as HTMLInputElement).value)}
-              className="w-full max-w-[120px] px-3 py-2 text-[13px] border border-neutral-200 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
-            />
-            <p className="text-[12px] text-neutral-500 dark:text-neutral-400 mt-1">
-              Alerter si un actif varie de plus de X % sur la période.
-            </p>
-          </div>
           <Toggle
             checked={dividends}
             onChange={(v) => update('dividends', v)}
@@ -190,6 +173,9 @@ export function SettingsPage() {
           />
         </div>
       </Card>
+
+      <AlertRulesCard />
+      <NotificationsCard />
 
     </div>
   )

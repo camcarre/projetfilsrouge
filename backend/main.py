@@ -16,9 +16,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, List
 
-from fastapi import FastAPI, Header, HTTPException, Request, Response
+from fastapi import FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
 # Charger .env depuis la racine du projet (un niveau au-dessus de backend/)
@@ -38,6 +38,8 @@ from services.yahoo_etf_service import (  # noqa: E402
     validate_ticker,
 )
 from services.analytics_service import get_indicators, get_risk_metrics, get_correlation_matrix  # noqa: E402
+from services.alerts_service import evaluate  # noqa: E402
+from services.montecarlo_service import simulate_portfolio  # noqa: E402
 
 app = FastAPI(title="Finance PWA API")
 
@@ -124,6 +126,14 @@ class InvestorProfileBody(BaseModel):
     monthly_investment: float = 0
     esg_preference: bool = False
     knowledge_level: str = "beginner"
+
+
+class AlertRuleBody(BaseModel):
+    scope: str = Field(pattern="^(asset|portfolio)$")
+    symbol: Optional[str] = None
+    metric: str = Field(pattern="^(day_change|vs_pru)$")
+    direction: str = Field(pattern="^(below|above)$")
+    threshold: float
 
 
 # ── Auth routes ───────────────────────────────────────────────────────────────
@@ -282,6 +292,22 @@ async def get_assets(
     except Exception as e:
         print(f"[history] Erreur snapshot: {e}")
 
+    # Évaluation silencieuse des règles d'alerte (effet de bord — ne casse jamais la réponse).
+    try:
+        today_iso = datetime.utcnow().date().isoformat()
+        prev_row = db.execute(
+            """
+            SELECT total_value FROM portfolio_history
+            WHERE user_id = ? AND date < ?
+            ORDER BY date DESC LIMIT 1
+            """,
+            (user_id, today_iso),
+        ).fetchone()
+        prev_total_value = float(prev_row["total_value"]) if prev_row else None
+        evaluate(db, user_id, enriched, total_value, prev_total_value)
+    except Exception as e:
+        print(f"[alerts] evaluation failed: {e}")
+
     return {"assets": enriched, "totalValue": total_value}
 
 
@@ -414,6 +440,109 @@ async def portfolio_history(authorization: Optional[str] = Header(default=None))
     return {"history": [dict(r) for r in rows]}
 
 
+@app.get("/api/portfolio/montecarlo", status_code=200)
+async def portfolio_montecarlo(
+    days: int = Query(30, ge=1, le=365),
+    simulations: int = Query(1000, ge=100, le=5000),
+    authorization: Optional[str] = Header(default=None),
+):
+    user_id = get_user_id(authorization)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Non authentifié")
+
+    db = get_db()
+    rows = db.execute(
+        "SELECT symbol, quantity, unit_price FROM assets WHERE user_id = ?",
+        (user_id,),
+    ).fetchall()
+    if not rows:
+        raise HTTPException(status_code=400, detail="Portefeuille vide")
+
+    holdings = [
+        {"symbol": r["symbol"], "quantity": r["quantity"], "unit_price": r["unit_price"]}
+        for r in rows
+    ]
+    try:
+        return simulate_portfolio(holdings, days, simulations)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# ── Alert rules ───────────────────────────────────────────────────────────────
+
+@app.get("/api/alerts", status_code=200)
+async def list_alerts(authorization: Optional[str] = Header(default=None)):
+    user_id = get_user_id(authorization)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Non authentifié")
+
+    db = get_db()
+    rows = db.execute(
+        """
+        SELECT id, scope, symbol, metric, direction, threshold, enabled
+        FROM alert_rules WHERE user_id = ?
+        ORDER BY id DESC
+        """,
+        (user_id,),
+    ).fetchall()
+    return {"rules": [dict(r) for r in rows]}
+
+
+@app.post("/api/alerts", status_code=201)
+async def create_alert(
+    body: AlertRuleBody,
+    authorization: Optional[str] = Header(default=None),
+):
+    user_id = get_user_id(authorization)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Non authentifié")
+
+    if body.scope == "asset" and not body.symbol:
+        raise HTTPException(status_code=400, detail="symbol requis pour scope=asset")
+
+    db = get_db()
+    cur = db.execute(
+        """
+        INSERT INTO alert_rules (user_id, scope, symbol, metric, direction, threshold, enabled)
+        VALUES (?, ?, ?, ?, ?, ?, 1)
+        """,
+        (user_id, body.scope, body.symbol, body.metric, body.direction, body.threshold),
+    )
+    db.commit()
+    return {
+        "rule": {
+            "id": cur.lastrowid,
+            "scope": body.scope,
+            "symbol": body.symbol,
+            "metric": body.metric,
+            "direction": body.direction,
+            "threshold": body.threshold,
+            "enabled": True,
+        }
+    }
+
+
+@app.delete("/api/alerts/{rule_id}", status_code=204)
+async def delete_alert(
+    rule_id: int,
+    authorization: Optional[str] = Header(default=None),
+):
+    user_id = get_user_id(authorization)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Non authentifié")
+
+    db = get_db()
+    rule = db.execute("SELECT * FROM alert_rules WHERE id = ?", (rule_id,)).fetchone()
+    if not rule:
+        raise HTTPException(status_code=404, detail="Règle introuvable")
+    if rule["user_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Accès refusé")
+
+    db.execute("DELETE FROM alert_rules WHERE id = ?", (rule_id,))
+    db.commit()
+    return Response(status_code=204)
+
+
 # ── Transactions ──────────────────────────────────────────────────────────────
 
 @app.get("/api/transactions", status_code=200)
@@ -428,6 +557,8 @@ async def get_transactions(authorization: Optional[str] = Header(default=None)):
         (user_id,),
     ).fetchall()
     return {"transactions": [dict(r) for r in rows]}
+
+
 
 
 @app.post("/api/transactions", status_code=201)

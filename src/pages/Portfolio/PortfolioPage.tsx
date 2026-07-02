@@ -11,6 +11,7 @@ import { fetchAssets, addAsset, updateAsset, removeAsset } from '@/services/port
 import { isCustomApiConfigured } from '@/services/api/client'
 import { formatCurrency } from '@/utils/format'
 import { CombinedChart } from '@/components/ui/CombinedChart'
+import { MonteCarloCard } from '@/components/portfolio/MonteCarloCard'
 import type { Asset } from '@/store/slices/portfolioSlice'
 import { getPortfolioHistory, type PortfolioHistoryEntry } from '@/services/portfolioService'
 import type { RootState } from '@/store'
@@ -265,6 +266,9 @@ export function PortfolioPage() {
           </div>
         </Card>
       )}
+
+      {/* Projection Monte Carlo */}
+      {assets.length > 0 && !needLogin && <MonteCarloCard />}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
         <Card title="Valeur totale">

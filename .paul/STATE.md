@@ -3,9 +3,9 @@
 ## Current Position
 
 Milestone: v0.5 Features Sprint 2 — Complete
-Phase: 08 Comparateur ETF + VaR UI + Corrélation — Complete
-Status: UNIFY — phase 08 clôturée
-Last activity: 2026-07-02 — 08-01 (bug modale corrigé) + 08-03 (corrélation) codés, testés, commités
+Phase: 09 — Monte Carlo + Alertes — Complete (backend + frontend, vérifié navigateur)
+Status: Phases 08 et 09 clôturées, mergées dans main
+Last activity: 2026-07-02 — merge feat/profil-editable + feat/phase-09 dans main ; Monte Carlo (cône UI + fix tz) et alertes (CRUD + notifications) vérifiés end-to-end
 
 Progress:
 - Migration Backend (v0.1): [██████████] 100% ✓
