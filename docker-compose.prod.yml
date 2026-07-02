@@ -15,7 +15,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-public"
-      - "traefik.http.routers.finance-api.rule=Host(`finance.camcamcarre.fr`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.finance-api.rule=Host(`finance.camcamcarre.fr`) && (PathPrefix(`/api`) || PathPrefix(`/auth`) || PathPrefix(`/health`))"
       - "traefik.http.routers.finance-api.entrypoints=websecure"
       - "traefik.http.routers.finance-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.finance-api.priority=100"
@@ -26,7 +26,7 @@ services:
       context: .
       dockerfile: Dockerfile.front
       args:
-        VITE_API_URL: "https://finance.camcamcarre.fr/api"
+        VITE_API_URL: "https://finance.camcamcarre.fr"
     container_name: finance-front
     restart: unless-stopped
     networks:
