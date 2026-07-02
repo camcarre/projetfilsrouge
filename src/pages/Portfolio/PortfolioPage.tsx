@@ -249,8 +249,8 @@ export function PortfolioPage() {
       {assets.length > 0 && !needLogin && (
         <Card title="Évolution de la performance" className="mb-5 overflow-hidden">
           <div className="h-[200px] -mx-1">
-            <CombinedChart 
-              historical={history.map(h => h.totalValue)} 
+            <CombinedChart
+              historical={history.slice(-30).map(h => h.totalValue)}
               height={200}
               minimal={true}
               currency="EUR"
