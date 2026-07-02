@@ -185,6 +185,17 @@ def get_correlation_matrix(tickers: list[str], period: str = "1y") -> dict:
     quotidiens d'au moins 2 tickers.
     """
     closes = yf.download(tickers, period=period, progress=False)["Close"]
+    if isinstance(closes, pd.Series):
+        closes = closes.to_frame()
+
+    # Écarter les tickers sans données de marché (ex : obligations non cotées sur Yahoo,
+    # ticker invalide) : sinon une seule colonne tout-NaN vide le dropna(how="any").
+    usable = [t for t in closes.columns if closes[t].notna().sum() >= 11]
+    excluded = [str(t) for t in closes.columns if t not in usable]
+    closes = closes[usable]
+    if closes.shape[1] < 2:
+        raise ValueError("Pas assez d'actifs avec des données de marché pour calculer une corrélation")
+
     returns = closes.pct_change().dropna(how="any")
     if len(returns) < 10:
         raise ValueError("Pas assez de données communes entre les actifs pour calculer une corrélation")
@@ -196,6 +207,7 @@ def get_correlation_matrix(tickers: list[str], period: str = "1y") -> dict:
         "tickers": ordered_tickers,
         "matrix": corr.values.tolist(),
         "period": period,
+        "excluded": excluded,
     }
 
 
