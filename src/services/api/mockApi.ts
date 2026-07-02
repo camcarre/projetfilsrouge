@@ -7,12 +7,12 @@ export const mockPortfolio = {
   assets: [],
 }
 
-export const mockEtfRecommendations = []
-
 export async function fetchMockPortfolio() {
   return Promise.resolve(mockPortfolio)
 }
 
-export async function fetchMockEtfRecommendations() {
-  return Promise.resolve(mockEtfRecommendations)
-}
+// ponytail: code mort — non utilisés (audit 2026-07-02). Décommenter si ETF recommendations mock nécessaires.
+// export const mockEtfRecommendations = []
+// export async function fetchMockEtfRecommendations() {
+//   return Promise.resolve(mockEtfRecommendations)
+// }
