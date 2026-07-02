@@ -9,6 +9,7 @@ import { fetchEtfs, type EtfRow } from '@/services/etfService'
 import { fetchRecommendedEtfs } from '@/services/profileService'
 import { fetchEtfHistory, formatHistoryForChart } from '@/services/etfHistoryService'
 import { CombinedChart } from '@/components/ui/CombinedChart'
+import { MultiLineChart, type Series } from '@/components/ui/MultiLineChart'
 import type { RootState } from '@/store'
 
 const SECTORS = ['Tous', 'Large cap', 'ESG', 'Emerging', 'Sectoriel', 'Diversifié']
@@ -29,6 +30,8 @@ export function EtfPage() {
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [compareOpen, setCompareOpen] = useState(false)
   const [compareSelected, setCompareSelected] = useState<EtfRow[]>([])
+  const [compareChartData, setCompareChartData] = useState<Series[]>([])
+  const [compareChartLoading, setCompareChartLoading] = useState(false)
   const [etfs, setEtfs] = useState<EtfRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -136,6 +139,33 @@ export function EtfPage() {
       return [...prev, etf]
     })
   }
+
+  useEffect(() => {
+    if (!compareOpen || compareSelected.length < 2) {
+      setCompareChartData([])
+      return
+    }
+
+    let cancelled = false
+    setCompareChartLoading(true)
+
+    Promise.allSettled(compareSelected.map((etf) => fetchEtfHistory(etf.ticker, '3mo'))).then((results) => {
+      if (cancelled) return
+      const series: Series[] = results.map((result, i) => {
+        const etf = compareSelected[i]
+        if (result.status === 'fulfilled') {
+          return { label: etf.ticker, data: formatHistoryForChart(result.value) }
+        }
+        return { label: etf.ticker, data: [], failed: true }
+      })
+      setCompareChartData(series)
+      setCompareChartLoading(false)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [compareOpen, compareSelected])
 
   return (
     <div>
@@ -410,6 +440,15 @@ export function EtfPage() {
           <div className="rounded-t-2xl sm:rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 shadow-xl p-5 max-w-2xl w-full max-h-[85vh] overflow-auto">
             <h3 className="text-[14px] font-semibold text-neutral-800 dark:text-neutral-100 mb-3">Comparer des ETF (sélectionnez jusqu’à 3)</h3>
             <p className="text-[12px] text-neutral-500 dark:text-neutral-400 mb-4">Cliquez sur une ligne de la liste pour l’ajouter ou la retirer.</p>
+            {compareSelected.length >= 2 && (
+              <div className="mb-5">
+                {compareChartLoading ? (
+                  <Skeleton className="h-48 w-full" />
+                ) : (
+                  <MultiLineChart series={compareChartData} />
+                )}
+              </div>
+            )}
             {compareSelected.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-[12px] border-collapse">
