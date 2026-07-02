@@ -20,6 +20,18 @@ from typing import Any, Optional
 
 _DEDUP_WINDOW_HOURS = 24
 
+_METRIC_LABEL = {"day_change": "variation du jour", "vs_pru": "plus/moins-value"}
+
+
+def _format_message(
+    cible: str, metric: str, value: float, direction: str, threshold: float
+) -> str:
+    """Message d'alerte lisible en français."""
+    label = _METRIC_LABEL.get(metric, metric)
+    sens = "sous" if direction == "below" else "au-dessus de"
+    signe = "+" if value > 0 else ""
+    return f"{cible} : {label} {signe}{value} % ({sens} {threshold} %)"
+
 
 def _message_exists_recently(
     db: sqlite3.Connection,
@@ -104,10 +116,7 @@ def _evaluate_asset_rules(
         if not _matches_threshold(value, rule["direction"], rule["threshold"]):
             continue
 
-        message = (
-            f"[asset] {rule['symbol']} {rule['metric']} = {value} "
-            f"{rule['direction']} {rule['threshold']}"
-        )
+        message = _format_message(rule["symbol"], rule["metric"], value, rule["direction"], rule["threshold"])
         try:
             _notify(db, user_id, message)
         except Exception as exc:
@@ -144,10 +153,7 @@ def _evaluate_portfolio_rules(
         if not _matches_threshold(value, rule["direction"], rule["threshold"]):
             continue
 
-        message = (
-            f"[portfolio] day_change = {value} "
-            f"{rule['direction']} {rule['threshold']}"
-        )
+        message = _format_message("Le portefeuille", rule["metric"], value, rule["direction"], rule["threshold"])
         try:
             _notify(db, user_id, message)
         except Exception as exc:

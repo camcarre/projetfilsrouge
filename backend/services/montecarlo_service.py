@@ -49,8 +49,12 @@ def _load_close_series(symbol: str) -> pd.Series | None:
     close = df["Close"].dropna()
     if close.empty:
         return None
-    # Normaliser l'index en date naive (jours)
-    close.index = pd.to_datetime(close.index).normalize()
+    # Normaliser l'index en date naive (jours). tz_localize(None) AVANT normalize :
+    # sinon crypto (UTC) et actions (tz bourse) ne s'intersectent jamais (dates tz-aware).
+    idx = pd.to_datetime(close.index)
+    if idx.tz is not None:
+        idx = idx.tz_localize(None)
+    close.index = idx.normalize()
     return close
 
 

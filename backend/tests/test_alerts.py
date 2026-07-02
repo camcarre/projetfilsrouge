@@ -50,7 +50,7 @@ class TestEvaluate:
             "SELECT message FROM notifications WHERE user_id = 1"
         ).fetchall()
         assert len(notif) == 1
-        assert "[asset] AAPL" in notif[0]["message"]
+        assert "AAPL" in notif[0]["message"] and "variation du jour" in notif[0]["message"]
 
     def test_dedup_within_24h_does_not_insert(self, db):
         from services.alerts_service import evaluate
