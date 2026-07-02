@@ -125,7 +125,7 @@ Phases : 0 of 3 complete.
 | Phase | Nom | Plans | Status | Completed |
 |-------|-----|-------|--------|-----------|
 | 11 | ML évalué (backtest) | 1/1 | ✅ Complete | 2026-07-02 |
-| 12 | Déploiement public (URL live) | 1/1 planifié | Planning (attend accès VPS) | - |
+| 12 | Déploiement public (URL live) | 1/1 | ✅ Complete | 2026-07-02 |
 | 13 | Preuves niveau A | 1/1 | ✅ Complete | 2026-07-02 |
 
 ### Phase 11 — ML évalué (backtest) ✅ Complete

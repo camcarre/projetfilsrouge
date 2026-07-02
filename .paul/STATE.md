@@ -3,10 +3,12 @@
 ## Current Position
 
 Milestone: v0.7 — Maximiser la note (grille d'évaluation) — In Progress (0/3 phases)
-Phase: 12 — Déploiement public (VPS) — Planning
-Loop: `PLAN◉ APPLY○ UNIFY○`
-Status: Phases 11+13 Complete. Plan 12-01 créé (VPS bare-metal + Nginx + systemd). Checkpoint human-action : attend accès SSH/VPS de Camille.
-Next: Camille fournit IP + SSH + domaine → exécution du déploiement
+Phase: 12 — Déploiement public (VPS) — Complete
+Loop: `PLAN✓ APPLY✓ UNIFY✓`
+Status: Milestone v0.7 COMPLET (3/3). App live https://finance.camcamcarre.fr (Docker+Traefik+letsencrypt), vérifiée end-to-end.
+Next: ouvrir PR feat/eval-points-v0.7 → main (sur demande)
+
+Incident résolu : `docker system prune` a supprimé le conteneur crowdsec crashé (disque plein) → 403 sur tout le VPS ; recréé via .hermes/projects/crowdsec. Leçon : `docker ps -a` avant tout prune sur ce VPS.
 Last activity: 2026-07-02 — évaluation projet (EVALUATION.md, 122/160) → milestone v0.7 créé, phases 11/12/13 mappées sur les leviers de points
 
 Boundaries (hors-scope milestone) : features non notées, refonte déco, migration base lourde (Supabase/VPS non requise pour l'URL live).
