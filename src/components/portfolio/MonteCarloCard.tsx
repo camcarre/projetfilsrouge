@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'preact/hooks'
 import { Card } from '@/components/ui/Card'
 import { MonteCarloChart } from '@/components/ui/MonteCarloChart'
+import { MethodTag } from '@/components/ui/MethodTag'
 import { getMonteCarlo } from '@/services/montecarloService'
 import type { MonteCarloResult } from '@/types/montecarlo'
 
@@ -69,6 +70,7 @@ export function MonteCarloCard() {
       ) : result && final ? (
         <>
           <MonteCarloChart steps={result.steps} initialValue={result.initialValue} />
+          <MethodTag label="Simulation Monte Carlo — mouvement brownien géométrique (GBM, numpy)" />
           <div className="mt-4 grid grid-cols-3 gap-3 text-center">
             <div>
               <p className="text-[11px] text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Médiane</p>

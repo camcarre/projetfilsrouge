@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'preact/hooks'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
 import { Card } from '@/components/ui/Card'
+import { MethodTag } from '@/components/ui/MethodTag'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Alert } from '@/components/ui/Alert'
@@ -256,6 +257,7 @@ export function PortfolioPage() {
               currency="EUR"
             />
           </div>
+          <MethodTag label="Historique réel du portefeuille — snapshots quotidiens (SQLite)" />
           <div className="mt-3 flex justify-between items-center text-[11px] text-neutral-500 dark:text-neutral-400">
              <span>Historique sur 30 jours</span>
              {history.length > 0 && (

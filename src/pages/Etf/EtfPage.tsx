@@ -10,6 +10,7 @@ import { fetchRecommendedEtfs } from '@/services/profileService'
 import { fetchEtfHistory, formatHistoryForChart } from '@/services/etfHistoryService'
 import { CombinedChart } from '@/components/ui/CombinedChart'
 import { MultiLineChart, type MultiLineSeries as Series } from "@/components/ui/MultiLineChart"
+import { MethodTag } from '@/components/ui/MethodTag'
 import type { RootState } from '@/store'
 
 const SECTORS = ['Tous', 'Large cap', 'ESG', 'Emerging', 'Sectoriel', 'Diversifié']
@@ -459,7 +460,10 @@ export function EtfPage() {
               {compareChartLoading ? (
                 <Skeleton className="h-48 w-full" />
               ) : (
-                <MultiLineChart series={compareChartData} />
+                <>
+                  <MultiLineChart series={compareChartData} />
+                  <MethodTag label="Données Yahoo Finance (yfinance) — cours historiques normalisés" />
+                </>
               )}
             </div>
           )}

@@ -5,6 +5,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { Alert } from '@/components/ui/Alert'
 import { CombinedChart } from '@/components/ui/CombinedChart'
 import { CorrelationHeatmap } from '@/components/ui/CorrelationHeatmap'
+import { MethodTag } from '@/components/ui/MethodTag'
 import { getStockPrediction } from '@/services/predictionService'
 import { getIndicators, getRiskMetrics, getCorrelationMatrix } from '@/services/analyticsService'
 import type { IndicatorsResponse, RiskMetrics, CorrelationMatrix, Backtest } from '@/types/analytics'
@@ -195,6 +196,14 @@ export function AnalysisPage() {
   const variationPct = currentVal ? ((lastVal - currentVal) / currentVal) * 100 : 0
   const currencyFor = (sym: string): string =>
     /\.(PA|AS|DE|MI|BR|LS)$/i.test(sym) ? 'EUR' : /\.L$/i.test(sym) ? 'GBP' : 'USD'
+  const predictEngine =
+    rawModel === 'linear-regression'
+      ? 'Régression linéaire (numpy.polyfit)'
+      : rawModel === 'ETS'
+      ? 'ETS — lissage exponentiel (statsmodels)'
+      : rawModel
+      ? `IA HuggingFace — ${String(rawModel).split('/').pop()}`
+      : 'ETS / régression linéaire selon disponibilité'
 
   // Indicateurs — dernières valeurs non-null
   const lastRsi = indicators ? [...indicators.rsi].reverse().find((v) => v !== null) ?? null : null
@@ -333,6 +342,7 @@ export function AnalysisPage() {
                 >
                   <CombinedChart historical={filteredHistorical} prediction={filteredPrediction} onHover={setChartHoverValue} />
                 </div>
+                <MethodTag label={`${predictEngine} · données Yahoo Finance`} />
                 {!showPreview && historical.length > 0 && historical.every((v) => v === historical[0]) && (
                   <p className="mt-2 text-[11px] text-neutral-500 dark:text-neutral-500">
                     Données historiques limitées ou constantes.
@@ -569,6 +579,9 @@ export function AnalysisPage() {
           )}
           {!correlationLoading && correlation && (
             <CorrelationHeatmap labels={correlation.tickers} matrix={correlation.matrix} />
+          )}
+          {!correlationLoading && correlation && (
+            <MethodTag label="Corrélation de Pearson sur les rendements journaliers (pandas · yfinance)" />
           )}
         </Card>
 
