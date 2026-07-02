@@ -2,39 +2,52 @@
 
 ## Current Position
 
-Milestone: Advanced Analytics (v0.2)
-Phase: 06 — E2E Tests (Playwright)
-Plan: 06-01 APPLY complete → UNIFY next
-Status: Phase 06 EN COURS — Tasks 1-4 exécutés, checkpoint:human-verify en attente
-Last activity: 2026-06-02 — 06-01 APPLY (Playwright MCP vérification: 7/7 tests PASS)
+Milestone: v0.5 Features Sprint 2 — Complete
+Phase: 08 Comparateur ETF + VaR UI + Corrélation — Complete
+Status: UNIFY — phase 08 clôturée
+Last activity: 2026-07-02 — 08-01 (bug modale corrigé) + 08-03 (corrélation) codés, testés, commités
 
 Progress:
-- Migration Backend: [██████████] 100% ✓
-- Phase 04: [██████████] 100% (3/3 plans complets)
-- Phase 05: [██████████] 100% ✓ (2/2 plans complets)
-- Phase 06: [███████░░░] 60% (06-01 APPLY PASS, UNIFY reste)
+- Migration Backend (v0.1): [██████████] 100% ✓
+- Phase 04: [██████████] 100% ✓
+- Phase 05: [██████████] 100% ✓
+- Phase 05-03 (Profil): [██████████] 100% ✓
+- Phase 06-01 (Playwright): [██████████] 100% ✓
+- Phase 06-02 (CI/CD): [██████████] 100% ✓
+- Phase 07-02 (Skeleton/UX): [██████████] 100% ✓
+- Phase 08 (Comparateur/VaR/Corrélation): [██████████] 100% ✓
 
 ## Loop Position
 
 ```
 PLAN ──▶ APPLY ──▶ UNIFY
-  ✓        ✓        ✓     [06-01 loop fermé — Phase 06-01 COMPLETE]
+  ✓        ✓        ✓     [phase 08 loop fermé — COMPLETE]
 ```
 
 ## Session Continuity
 
-Last session: 2026-06-02
-Stopped at: 06-01 UNIFY complet — Phase 06 E2E Tests loop closed
-Next action: /paul:plan (Phase 06-02 ou phase suivante)
-Resume file: .paul/phases/06-e2e-tests/06-01-SUMMARY.md
+Last session: 2026-07-02
+Stopped at: Phase 08 clôturée
+Next action: Phase 06-03 (Lighthouse) ou Phase 09 (Monte Carlo + Alertes + Auth refresh)
+Resume file: .paul/phases/08-etf-comparator/08-03-PLAN.md
 
-## En attente (phases restantes)
+## Plans créés (prêts à exécuter)
 
-- Phase 01 — Quick Wins UI : nav active, heading scale, dark mode labels, tabular-nums
-- Phase 02 — Composants Feedback : Skeleton, Toast, EmptyState, page transition
-- Phase 03 — UX Flows : onboarding, sticky filters ETF, cross-links, pull-to-refresh
-- Phase 06-02 — CI/CD : GitHub Actions workflow pour E2E tests
-- Phase 06-03 — Performance : Lighthouse testing
+Aucun.
+
+## En attente (phases planifiées dans ROADMAP)
+
+- Phase 06-03 — Lighthouse performance
+- Phase 09 — Monte Carlo + Alertes + Auth refresh (#8, #13, #14)
+- Phase 10 — Déploiement production (#6)
+- Phase 01 — Quick Wins UI
+- Phase 02 — Composants Feedback
+- Phase 03 — UX Flows
+
+## Notes
+
+- Issues GitHub #2, #3, #4, #9, #11, #12 restent OPEN alors que le code correspondant est mergé — à fermer manuellement.
+- Incident session du 2026-07-02 : `backend/data/finance.db` supprimé par erreur durant un test manuel (fichier gitignored, non récupérable). La base est repartie vide — utilisateurs/actifs/transactions de dev perdus. Le compte `e2e-test@test.com` utilisé par la suite Playwright a été recréé avec un profil investisseur minimal pour ne pas casser `auth.spec.ts`.
 
 ## Decisions
 
@@ -55,9 +68,8 @@ Resume file: .paul/phases/06-e2e-tests/06-01-SUMMARY.md
 - Portfolio : GET /api/portfolio/history (snapshots quotidiens)
 - Notifications : GET/POST /api/notifications, /api/notifications/read
 - ETF : GET /api/etfs, GET /api/etfs/{ticker} + /performance + /holdings + /history, POST /api/etfs/compare
-- Predict : GET /api/predict/stock (numpy + HF Router Qwen2.5-72B)
+- Predict : GET /api/predict/stock (numpy + ETS Holt trend='add' + HF Router Qwen2.5-72B)
 - Quiz : GET /api/quiz/generate (HF Router + fallback statique)
-
-### Git State
-Branch: cam (pas de feature branch phase 04)
-Fichiers backend non commités : database.py, main.py, requirements.txt, services/
+- Profile : GET/POST /api/profile (UPSERT SQLite)
+- ETF Recommended : GET /api/etfs/recommended (scoring 100pts)
+- Analytics : GET /api/analytics/{ticker} (RSI, MACD, Bollinger, VaR, drawdown, Sharpe)

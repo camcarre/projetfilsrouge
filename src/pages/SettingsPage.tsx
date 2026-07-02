@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'preact/hooks'
+import { useNavigate } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
 import { useTheme } from '@/contexts/ThemeContext'
+import type { RootState } from '@/store'
 
 const STORAGE_KEYS = {
   email: 'finance-pwa-notif-email',
@@ -85,6 +89,8 @@ function Toggle({
 export function SettingsPage() {
   const { theme, setTheme } = useTheme()
   const { email, inApp, variationThreshold, dividends, update } = useNotificationPrefs()
+  const navigate = useNavigate()
+  const profile = useSelector((state: RootState) => state.profile.profile)
 
   return (
     <div>
@@ -116,6 +122,29 @@ export function SettingsPage() {
           </button>
         </div>
       </Card>
+
+      {profile && (
+        <Card title="Profil investisseur" className="mb-5">
+          <p className="text-[13px] text-neutral-600 dark:text-neutral-400 mb-4">
+            Modifiez vos préférences pour affiner les recommandations ETF.
+          </p>
+          <div className="flex flex-wrap gap-2 text-[12px] text-neutral-500 dark:text-neutral-400 mb-4">
+            <span className="px-2 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800">Risque {profile.risk_tolerance}/5</span>
+            <span className="px-2 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800">
+              {profile.investment_horizon === 'short' ? 'Court terme' : profile.investment_horizon === 'medium' ? 'Moyen terme' : 'Long terme'}
+            </span>
+            <span className="px-2 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800">
+              {profile.investment_goal === 'growth' ? 'Croissance' : profile.investment_goal === 'income' ? 'Revenus' : 'Préservation'}
+            </span>
+            {profile.esg_preference && (
+              <span className="px-2 py-1 rounded-md bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">ESG</span>
+            )}
+          </div>
+          <Button variant="secondary" onClick={() => navigate('/profile/edit')}>
+            Modifier mon profil
+          </Button>
+        </Card>
+      )}
 
       <Card title="Notifications" className="mb-5">
         <p className="text-[13px] text-neutral-600 dark:text-neutral-400 mb-4">

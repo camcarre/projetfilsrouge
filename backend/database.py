@@ -97,6 +97,20 @@ CREATE TABLE IF NOT EXISTS notifications (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS investor_profiles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER UNIQUE NOT NULL,
+    risk_tolerance INTEGER NOT NULL CHECK(risk_tolerance BETWEEN 1 AND 5),
+    investment_horizon TEXT NOT NULL CHECK(investment_horizon IN ('short', 'medium', 'long')),
+    investment_goal TEXT NOT NULL CHECK(investment_goal IN ('growth', 'income', 'preservation')),
+    monthly_investment REAL DEFAULT 0,
+    esg_preference INTEGER DEFAULT 0,
+    knowledge_level TEXT DEFAULT 'beginner' CHECK(knowledge_level IN ('beginner', 'intermediate', 'advanced')),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
 """
 
 _conn: sqlite3.Connection | None = None

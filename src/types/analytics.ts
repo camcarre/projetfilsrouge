@@ -20,3 +20,9 @@ export interface RiskMetrics {
   volatility: number
   sharpe_ratio: number
 }
+
+export interface CorrelationMatrix {
+  tickers: string[]
+  matrix: number[][]
+  period: string
+}

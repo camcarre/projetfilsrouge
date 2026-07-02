@@ -1,12 +1,13 @@
-import { useState } from 'preact/hooks'
+import { useState, useEffect } from 'preact/hooks'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { Alert } from '@/components/ui/Alert'
 import { CombinedChart } from '@/components/ui/CombinedChart'
+import { CorrelationHeatmap } from '@/components/ui/CorrelationHeatmap'
 import { getStockPrediction } from '@/services/predictionService'
-import { getIndicators, getRiskMetrics } from '@/services/analyticsService'
-import type { IndicatorsResponse, RiskMetrics } from '@/types/analytics'
+import { getIndicators, getRiskMetrics, getCorrelationMatrix } from '@/services/analyticsService'
+import type { IndicatorsResponse, RiskMetrics, CorrelationMatrix } from '@/types/analytics'
 
 /** Extrait une valeur numérique ou une série du retour API pour l'affichage */
 function parsePrediction(prediction: unknown): { value?: number; series?: number[]; history?: number[]; raw: unknown } {
@@ -106,6 +107,20 @@ export function AnalysisPage() {
   const [riskMetrics, setRiskMetrics] = useState<RiskMetrics | null>(null)
   const [riskError, setRiskError] = useState<string | null>(null)
   const [riskLoading, setRiskLoading] = useState(false)
+
+  const [correlation, setCorrelation] = useState<CorrelationMatrix | null>(null)
+  const [correlationError, setCorrelationError] = useState<string | null>(null)
+  const [correlationInsufficientAssets, setCorrelationInsufficientAssets] = useState(false)
+  const [correlationLoading, setCorrelationLoading] = useState(true)
+
+  useEffect(() => {
+    getCorrelationMatrix().then(({ data, error, insufficientAssets }) => {
+      setCorrelation(data)
+      setCorrelationError(error && !insufficientAssets ? error.message : null)
+      setCorrelationInsufficientAssets(insufficientAssets)
+      setCorrelationLoading(false)
+    })
+  }, [])
 
   const handlePredict = async (overrideSymbol?: string) => {
     const sym = (overrideSymbol ?? symbol).trim()
@@ -476,11 +491,24 @@ export function AnalysisPage() {
           )}
         </Card>
 
-        {/* ── Graphiques interactifs ────────────────────────────────────── */}
-        <Card title="Graphiques interactifs">
-          <p className="text-[13px] text-neutral-600 dark:text-neutral-400">
-            Courbes, camemberts, histogrammes. Corrélation entre actifs, comparaison à un indice.
-          </p>
+        {/* ── Corrélation entre actifs ──────────────────────────────────── */}
+        <Card title="Corrélation entre actifs">
+          {correlationLoading && (
+            <div className="flex items-center gap-2 text-[13px] text-neutral-500 dark:text-neutral-400">
+              <Spinner size="sm" /> Calcul de la corrélation…
+            </div>
+          )}
+          {!correlationLoading && correlationInsufficientAssets && (
+            <p className="text-[13px] text-neutral-600 dark:text-neutral-400">
+              Ajoutez au moins 2 actifs à votre portefeuille pour voir leur corrélation.
+            </p>
+          )}
+          {!correlationLoading && correlationError && (
+            <Alert variant="error">{correlationError}</Alert>
+          )}
+          {!correlationLoading && correlation && (
+            <CorrelationHeatmap tickers={correlation.tickers} matrix={correlation.matrix} />
+          )}
         </Card>
 
         {/* ── Historique des prédictions ────────────────────────────────── */}

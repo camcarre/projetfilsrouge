@@ -89,14 +89,21 @@ export function PortfolioPage() {
   }, [assets, sortBy, sortDir])
 
   const handleExportCsv = () => {
-    const headers = 'Nom;Symbole;Catégorie;Quantité;Prix unitaire;Valeur\n'
-    const rows = sortedAssets.map((a) => `${a.name};${a.symbol};${a.category};${a.quantity};${a.unitPrice};${a.quantity * a.unitPrice}`).join('\n')
+    if (assets.length === 0) return
+    const csvField = (v: string) => `"${v.replace(/"/g, '""').replace(/^[=+\-@]/, "'$&")}"`
+    const headers = 'Nom;Symbole;Catégorie;Quantité;Prix achat (€);Prix actuel (€);Valeur totale (€);+/- %\n'
+    const rows = sortedAssets.map((a) => {
+      const buyPrice = a.originalPrice ?? a.unitPrice
+      const totalVal = a.quantity * a.unitPrice
+      const pnlPct = buyPrice !== 0 ? ((a.unitPrice - buyPrice) / buyPrice * 100).toFixed(2) : '0.00'
+      return [csvField(a.name), csvField(a.symbol), csvField(a.category), a.quantity, buyPrice.toFixed(2), a.unitPrice.toFixed(2), totalVal.toFixed(2), pnlPct].join(';')
+    }).join('\n')
     const blob = new Blob(['\ufeff' + headers + rows], { type: 'text/csv;charset=utf-8' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `portefeuille-${new Date().toISOString().slice(0, 10)}.csv`
-    a.click()
-    URL.revokeObjectURL(a.href)
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `portfolio_${new Date().toISOString().slice(0, 10)}.csv`
+    link.click()
+    URL.revokeObjectURL(link.href)
   }
 
   const toggleSort = (key: SortKey) => {
@@ -386,7 +393,7 @@ export function PortfolioPage() {
                 <Button variant="outline" onClick={load} disabled={loading}>
                   {loading ? 'Actualisation...' : 'Actualiser les cours'}
                 </Button>
-                <Button variant="outline" onClick={handleExportCsv}>Exporter CSV</Button>
+                <Button variant="outline" onClick={handleExportCsv} disabled={assets.length === 0}>Exporter CSV</Button>
               </>
             )}
             <Button variant="primary" onClick={() => (showForm ? closeForm() : openAddForm())}>
