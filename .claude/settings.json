@@ -18,8 +18,12 @@
   "hooks": {
     "SessionStart": [
       {
-        "type": "command",
-        "command": "echo '--- CONTEXTE finance-pwa ---' && git log --oneline -5 2>/dev/null && git status --short 2>/dev/null"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '--- CONTEXTE finance-pwa ---' && git log --oneline -5 2>/dev/null && git status --short 2>/dev/null"
+          }
+        ]
       }
     ]
   },

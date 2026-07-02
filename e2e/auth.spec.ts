@@ -38,11 +38,12 @@ test.describe('Auth', () => {
     const onAuthPage = page.url().includes('/auth')
     expect(onAuthPage).toBe(false)
 
-    // Can see the dashboard heading
-    await expect(page.getByRole('heading', { name: /tableau de bord|dashboard/i })).toBeVisible()
-
-    // Logout if possible — look for the button specifically
+    // Authentifié : la nav montre le bouton Déconnexion (un compte neuf est
+    // routé vers le questionnaire de profil, pas forcément le dashboard).
     const logoutBtn = page.getByRole('button', { name: /déconnexion/i })
+    await expect(logoutBtn).toBeVisible()
+
+    // Logout
     const logoutVisible = await logoutBtn.isVisible({ timeout: 3000 }).catch(() => false)
     if (logoutVisible) {
       await logoutBtn.click()
